@@ -22,7 +22,6 @@ func (o *LanHeaderFrame) MarshalBinary() (data []byte, _ error) {
 	// Size.
 	binary.LittleEndian.PutUint16(data[:2], o.Size)
 
-	// Origin.
 	// 0000 0000  0000 0000
 
 	// Tagged.
@@ -42,7 +41,49 @@ func (o *LanHeaderFrame) MarshalBinary() (data []byte, _ error) {
 }
 
 type LanHeaderFrameAddress struct {
+	Target      uint64
+	AckRequired bool
+	ResRequired bool
+	Sequence    uint8
+}
 
+func (o *LanHeaderFrameAddress) MarshalBinary() (data []byte, _ error) {
+	data = make([]byte, 16)
+
+	littleEndianPutUint48 := func(b []byte, v uint64) {
+		b[0] = byte(v)
+		b[1] = byte(v >> 8)
+		b[2] = byte(v >> 16)
+		b[3] = byte(v >> 24)
+		b[4] = byte(v >> 32)
+		b[5] = byte(v >> 40)
+	}
+
+	// Target.
+	if o.Target <= 0xffffff {
+		littleEndianPutUint48(data[:6], o.Target)
+	} else {
+		binary.LittleEndian.PutUint64(data[:8], o.Target)
+	}
+
+	// 0000 0000
+
+	// AckRequired.
+	if o.AckRequired {
+		data[14] |= 0x02
+	}
+	// 0000 00?0
+
+	// ResRequired.
+	if o.ResRequired {
+		data[14] |= 0x01
+	}
+	// 0000 00??
+
+	// Sequence.
+	data[15] = o.Sequence
+
+	return
 }
 
 type LanHeaderProtocolHeader struct {
