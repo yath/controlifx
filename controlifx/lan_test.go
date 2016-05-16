@@ -6,7 +6,7 @@ import (
 )
 
 func TestLanHeaderFrame_MarshalBinary(t *testing.T) {
-	// Check little-endianness and sub-byte values (by changing [Tagged])
+	// Check little-endianness and sub-byte values (by changing [Tagged]).
 
 	o := LanHeaderFrame{Size:0x1fff, Tagged:true, Source:0x1fffffff}
 	b, _ := o.MarshalBinary()
@@ -30,7 +30,7 @@ func TestLanHeaderFrame_MarshalBinary(t *testing.T) {
 }
 
 func TestLanHeaderFrameAddress_MarshalBinary(t *testing.T) {
-	// Check little-endianness and sub-byte values (by changing [{Ack,Res}Required])
+	// Check little-endianness and sub-byte values (by changing [{Ack,Res}Required]).
 
 	o := LanHeaderFrameAddress{Target:0x1fffffffffffffff, AckRequired:true, ResRequired:true, Sequence:0x1f}
 	b, _ := o.MarshalBinary()
@@ -54,6 +54,8 @@ func TestLanHeaderFrameAddress_MarshalBinary(t *testing.T) {
 }
 
 func TestLanHeaderProtocolHeader_MarshalBinary(t *testing.T) {
+	// Check little-endianness.
+
 	o := LanHeaderProtocolHeader{Type:0x1fff}
 	b, _ := o.MarshalBinary()
 	s := fmt.Sprintf("%#v", b)
