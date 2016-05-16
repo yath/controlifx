@@ -87,7 +87,16 @@ func (o *LanHeaderFrameAddress) MarshalBinary() (data []byte, _ error) {
 }
 
 type LanHeaderProtocolHeader struct {
+	Type uint16
+}
 
+func (o *LanHeaderProtocolHeader) MarshalBinary() (data []byte, _ error) {
+	data = make([]byte, 12)
+
+	// Type.
+	binary.LittleEndian.PutUint16(data[8:10], o.Type)
+
+	return
 }
 
 type LanHeaderPayload struct {

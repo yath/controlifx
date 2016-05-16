@@ -52,3 +52,15 @@ func TestLanHeaderFrameAddress_MarshalBinary(t *testing.T) {
 		t.Errorf("expected '%s', got '%s'", Expected2, s)
 	}
 }
+
+func TestLanHeaderProtocolHeader_MarshalBinary(t *testing.T) {
+	o := LanHeaderProtocolHeader{Type:0x1fff}
+	b, _ := o.MarshalBinary()
+	s := fmt.Sprintf("%#v", b)
+
+	const Expected = "[]byte{0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0xff, 0x1f, 0x0, 0x0}"
+
+	if s != Expected {
+		t.Errorf("expected '%s', got '%s'", Expected, s)
+	}
+}
