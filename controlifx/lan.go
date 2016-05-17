@@ -25,7 +25,7 @@ func (o *LanMessage) MarshalBinary() (data []byte, err error) {
 		return
 	}
 
-	data = append(header, payload)
+	data = append(header, payload...)
 
 	return
 }
@@ -52,7 +52,7 @@ func (o *LanHeader) MarshalBinary() (data []byte, err error) {
 		return
 	}
 
-	data = append(frame, append(frameAddress, protocolHeader))
+	data = append(frame, append(frameAddress, protocolHeader...)...)
 
 	return
 }
