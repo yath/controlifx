@@ -3,15 +3,38 @@ package controlifx
 import (
 	"encoding"
 	"encoding/binary"
+	"fmt"
+	_time "time"
 )
 
 // The recommended maximum number of messages to be sent to any one device
-// every second.
+// every second over LAN.
 const MessageRate = 20
+
+// The LAN protocol header is always 36 bytes long.
+const LanHeaderSize = 36
 
 type LanMessage struct {
 	header  LanHeader
 	payload encoding.BinaryMarshaler
+}
+
+func (o *LanMessage) Payload(payload encoding.BinaryMarshaler) {
+	o.payload = payload
+
+	o.updateSize()
+}
+
+func (o *LanMessage) updateSize() {
+	size := LanHeaderSize
+
+	if o.payload != nil {
+		b, _ := o.payload.MarshalBinary()
+
+		size += len(b)
+	}
+
+	o.header.frame.Size = uint16(size)
 }
 
 func (o LanMessage) MarshalBinary() (data []byte, err error) {
@@ -20,9 +43,13 @@ func (o LanMessage) MarshalBinary() (data []byte, err error) {
 		return
 	}
 
-	payload, err := o.payload.MarshalBinary()
-	if err != nil {
-		return
+	var payload []byte
+
+	if o.payload != nil {
+		payload, err = o.payload.MarshalBinary()
+		if err != nil {
+			return
+		}
 	}
 
 	data = append(header, payload...)
@@ -144,4 +171,287 @@ func (o LanHeaderProtocolHeader) MarshalBinary() (data []byte, _ error) {
 	binary.LittleEndian.PutUint16(data[8:10], o.Type)
 
 	return
+}
+
+type label struct {
+	value string
+}
+
+func (o label) MarshalBinary() (data []byte, err error) {
+	const Size = 32
+
+	if len(o.value) > Size {
+		err = fmt.Errorf("label '%s' has length %d > %d", o.value, len(o.value), Size)
+		return
+	}
+
+	data = append([]byte(o.value), make([]byte, Size - len(o.value))...)
+
+	return
+}
+
+type port struct {
+	value uint32
+}
+
+func (o port) MarshalBinary() (data []byte, _ error) {
+	data = make([]byte, 4)
+
+	binary.LittleEndian.PutUint32(data, o.value)
+
+	return
+}
+
+type powerLevel struct {
+	value uint16
+}
+
+func (o powerLevel) MarshalBinary() (data []byte, err error) {
+	if o.value != 0 && o.value != 65535 {
+		err = fmt.Errorf("level %d is not 0 or 65535", o.value)
+		return
+	}
+
+	data = make([]byte, 2)
+
+	binary.LittleEndian.PutUint16(data, o.value)
+
+	return
+}
+
+type time struct {
+	value uint64
+}
+
+func (o time) Time() _time.Time {
+	// Check if value is over the max int64 size.
+	if o.value > 9223372036854775807 {
+		return _time.Time{}
+	}
+
+	return _time.Unix(0, int64(o.value))
+}
+
+func (o time) MarshalBinary() (data []byte, _ error) {
+	data = make([]byte, 8)
+
+	binary.LittleEndian.PutUint64(data, o.value)
+
+	return
+}
+
+type LanDeviceMessageBuilder struct {
+	Source      uint32
+	Target      uint64
+	AckRequired bool
+	ResRequired bool
+	Sequence    uint8
+}
+
+func (o LanDeviceMessageBuilder) Tagged() bool {
+	return o.Target > 0
+}
+
+func (o LanDeviceMessageBuilder) buildNormalMessageOfType(t uint16) LanMessage {
+	return LanMessage{
+		header:LanHeader{
+			frame:LanHeaderFrame{
+				Size:LanHeaderSize,
+				Tagged:o.Tagged(),
+				Source:o.Source,
+			},
+			frameAddress:LanHeaderFrameAddress{
+				Target:o.Target,
+				AckRequired:o.AckRequired,
+				ResRequired:o.ResRequired,
+				Sequence:o.Sequence,
+			},
+			protocolHeader:LanHeaderProtocolHeader{
+				Type:t,
+			},
+		},
+	}
+}
+
+func (o LanDeviceMessageBuilder) GetService() LanMessage {
+	const Type = 2
+
+	return o.buildNormalMessageOfType(Type)
+}
+
+type StateServiceLanMessage struct {
+	Service uint8
+	Port    uint32
+}
+
+func (o LanDeviceMessageBuilder) GetHostInfo() LanMessage {
+	const Type = 12
+
+	return o.buildNormalMessageOfType(Type)
+}
+
+type StateHostInfoLanMessage struct {
+	Signal float32
+	Tx     uint32
+	Rx     uint32
+}
+
+func (o LanDeviceMessageBuilder) GetHostFirmware() LanMessage {
+	const Type = 14
+
+	return o.buildNormalMessageOfType(Type)
+}
+
+type StateHostFirmwareLanMessage struct {
+	Build   uint64
+	Version uint32
+}
+
+func (o LanDeviceMessageBuilder) GetWifiInfo() LanMessage {
+	const Type = 16
+
+	return o.buildNormalMessageOfType(Type)
+}
+
+type StateWifiInfoLanMessage struct {
+	Signal float32
+	Tx     uint32
+	Rx     uint32
+}
+
+func (o LanDeviceMessageBuilder) GetWifiFirmware() LanMessage {
+	const Type = 18
+
+	return o.buildNormalMessageOfType(Type)
+}
+
+type StateWifiFirmwareLanMessage struct {
+	Build   uint64
+	Version uint32
+}
+
+func (o LanDeviceMessageBuilder) GetPower() LanMessage {
+	const Type = 20
+
+	return o.buildNormalMessageOfType(Type)
+}
+
+type SetPowerLanMessage struct {
+	Level powerLevel
+}
+
+func (o SetPowerLanMessage) MarshalBinary() ([]byte, error) {
+	return o.Level.MarshalBinary()
+}
+
+func (o LanDeviceMessageBuilder) SetPower(payload SetPowerLanMessage) LanMessage {
+	const Type = 21
+
+	msg := o.buildNormalMessageOfType(Type)
+
+	msg.Payload(payload)
+
+	return msg
+}
+
+type StatePowerLanMessage struct {
+	Level powerLevel
+}
+
+func (o LanDeviceMessageBuilder) GetLabel() LanMessage {
+	const Type = 23
+
+	return o.buildNormalMessageOfType(Type)
+}
+
+type SetLabelLanMessage struct {
+	label label
+}
+
+func (o SetLabelLanMessage) MarshalBinary() ([]byte, error) {
+	return o.label.MarshalBinary()
+}
+
+func (o LanDeviceMessageBuilder) SetLabel(payload SetLabelLanMessage) LanMessage {
+	const Type = 24
+
+	msg := o.buildNormalMessageOfType(Type)
+
+	msg.Payload(payload)
+
+	return msg
+}
+
+type StateLabelLanMessage struct {
+	label label
+}
+
+func (o LanDeviceMessageBuilder) GetVersion() LanMessage {
+	const Type = 32
+
+	return o.buildNormalMessageOfType(Type)
+}
+
+type StateVersionLanMessage struct {
+	vendor  uint32
+	product uint32
+	version uint32
+}
+
+func (o LanDeviceMessageBuilder) GetInfo() LanMessage {
+	const Type = 34
+
+	return o.buildNormalMessageOfType(Type)
+}
+
+type StateInfoLanMessage struct {
+	time     time
+	uptime   uint64
+	downtime uint64
+}
+
+func (o LanDeviceMessageBuilder) GetLocation() LanMessage {
+	const Type = 48
+
+	return o.buildNormalMessageOfType(Type)
+}
+
+type StateLocationLanMessage struct {
+	location  [16]byte
+	label     label
+	updatedAt time
+}
+
+func (o LanDeviceMessageBuilder) GetGroup() LanMessage {
+	const Type = 51
+
+	return o.buildNormalMessageOfType(Type)
+}
+
+type StateGroupLanMessage struct {
+	group     [16]byte
+	label     label
+	updatedAt time
+}
+
+type EchoRequestLanMessage struct {
+	payload [64]byte
+}
+
+func (o EchoRequestLanMessage) MarshalBinary() ([]byte, error) {
+	return o.payload[:], nil
+}
+
+func (o LanDeviceMessageBuilder) EchoRequest(payload EchoRequestLanMessage) LanMessage {
+	const Type = 58
+
+	msg := o.buildNormalMessageOfType(Type)
+
+	msg.Payload(payload)
+
+	return msg
+}
+
+type EchoResponseLanMessage struct {
+	payload [64]byte
 }
