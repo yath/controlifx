@@ -1,6 +1,9 @@
 package controlifx
 
-import "encoding/binary"
+import (
+	"encoding"
+	"encoding/binary"
+)
 
 // The recommended maximum number of messages to be sent to any one device
 // every second.
@@ -8,13 +11,50 @@ const MessageRate = 20
 
 type LanMessage struct {
 	header  LanHeader
-	payload LanPayload
+	payload encoding.BinaryMarshaler
+}
+
+func (o *LanMessage) MarshalBinary() (data []byte, err error) {
+	header, err := o.header.MarshalBinary()
+	if err != nil {
+		return
+	}
+
+	payload, err := o.payload.MarshalBinary()
+	if err != nil {
+		return
+	}
+
+	data = append(header, payload)
+
+	return
 }
 
 type LanHeader struct {
 	frame 		   LanHeaderFrame
 	frameAddress   LanHeaderFrameAddress
 	protocolHeader LanHeaderProtocolHeader
+}
+
+func (o *LanHeader) MarshalBinary() (data []byte, err error) {
+	frame, err := o.frame.MarshalBinary()
+	if err != nil {
+		return
+	}
+
+	frameAddress, err := o.frameAddress.MarshalBinary()
+	if err != nil {
+		return
+	}
+
+	protocolHeader, err := o.protocolHeader.MarshalBinary()
+	if err != nil {
+		return
+	}
+
+	data = append(frame, append(frameAddress, protocolHeader))
+
+	return
 }
 
 type LanHeaderFrame struct {
@@ -104,8 +144,4 @@ func (o *LanHeaderProtocolHeader) MarshalBinary() (data []byte, _ error) {
 	binary.LittleEndian.PutUint16(data[8:10], o.Type)
 
 	return
-}
-
-type LanPayload struct {
-
 }
