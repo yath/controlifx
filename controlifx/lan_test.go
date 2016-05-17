@@ -18,7 +18,7 @@ func TestLanMessage_MarshalBinary(t *testing.T) {
 	if err != nil {
 		t.Error("error", err)
 	}
-	
+
 	s := fmt.Sprintf("%#v", b)
 
 	const Expected = "[]byte{0xff, 0x1f, 0x38, 0x0, 0xff, 0xff, 0xff, 0x1f, " +
