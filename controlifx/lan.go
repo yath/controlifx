@@ -14,7 +14,7 @@ type LanMessage struct {
 	payload encoding.BinaryMarshaler
 }
 
-func (o *LanMessage) MarshalBinary() (data []byte, err error) {
+func (o LanMessage) MarshalBinary() (data []byte, err error) {
 	header, err := o.header.MarshalBinary()
 	if err != nil {
 		return
@@ -36,7 +36,7 @@ type LanHeader struct {
 	protocolHeader LanHeaderProtocolHeader
 }
 
-func (o *LanHeader) MarshalBinary() (data []byte, err error) {
+func (o LanHeader) MarshalBinary() (data []byte, err error) {
 	frame, err := o.frame.MarshalBinary()
 	if err != nil {
 		return
@@ -63,7 +63,7 @@ type LanHeaderFrame struct {
 	Source uint32
 }
 
-func (o *LanHeaderFrame) MarshalBinary() (data []byte, _ error) {
+func (o LanHeaderFrame) MarshalBinary() (data []byte, _ error) {
 	data = make([]byte, 8)
 
 	// Size.
@@ -94,7 +94,7 @@ type LanHeaderFrameAddress struct {
 	Sequence    uint8
 }
 
-func (o *LanHeaderFrameAddress) MarshalBinary() (data []byte, _ error) {
+func (o LanHeaderFrameAddress) MarshalBinary() (data []byte, _ error) {
 	data = make([]byte, 16)
 
 	littleEndianPutUint48 := func(b []byte, v uint64) {
@@ -137,7 +137,7 @@ type LanHeaderProtocolHeader struct {
 	Type uint16
 }
 
-func (o *LanHeaderProtocolHeader) MarshalBinary() (data []byte, _ error) {
+func (o LanHeaderProtocolHeader) MarshalBinary() (data []byte, _ error) {
 	data = make([]byte, 12)
 
 	// Type.
