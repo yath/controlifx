@@ -3,11 +3,14 @@ package controlifx
 import "encoding/binary"
 
 type LanMessage struct {
-
+	header  LanHeader
+	payload LanPayload
 }
 
 type LanHeader struct {
-
+	frame 		   LanHeaderFrame
+	frameAddress   LanHeaderFrameAddress
+	protocolHeader LanHeaderProtocolHeader
 }
 
 type LanHeaderFrame struct {
@@ -99,6 +102,6 @@ func (o *LanHeaderProtocolHeader) MarshalBinary() (data []byte, _ error) {
 	return
 }
 
-type LanHeaderPayload struct {
+type LanPayload struct {
 
 }
