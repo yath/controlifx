@@ -2,6 +2,10 @@ package controlifx
 
 import "encoding/binary"
 
+// The recommended maximum number of messages to be sent to any one device
+// every second.
+const MessageRate = 20
+
 type LanMessage struct {
 	header  LanHeader
 	payload LanPayload
