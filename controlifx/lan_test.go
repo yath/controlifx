@@ -14,7 +14,11 @@ func TestLanMessage_MarshalBinary(t *testing.T) {
 		},
 		payload:LanHeaderFrame{Size:0x1fff, Tagged:true, Source:0x1fffffff},
 	}
-	b, _ := o.MarshalBinary()
+	b, err := o.MarshalBinary()
+	if err != nil {
+		t.Error("error", err)
+	}
+	
 	s := fmt.Sprintf("%#v", b)
 
 	const Expected = "[]byte{0xff, 0x1f, 0x38, 0x0, 0xff, 0xff, 0xff, 0x1f, " +
@@ -34,7 +38,11 @@ func TestLanHeader_MarshalBinary(t *testing.T) {
 		frameAddress:LanHeaderFrameAddress{Target:0x1fffffffffffffff, AckRequired:true, ResRequired:true, Sequence:0x1f},
 		protocolHeader:LanHeaderProtocolHeader{Type:0x1fff},
 	}
-	b, _ := o.MarshalBinary()
+	b, err := o.MarshalBinary()
+	if err != nil {
+		t.Error("error", err)
+	}
+
 	s := fmt.Sprintf("%#v", b)
 
 	const Expected = "[]byte{0xff, 0x1f, 0x38, 0x0, 0xff, 0xff, 0xff, 0x1f, " +
@@ -51,7 +59,11 @@ func TestLanHeaderFrame_MarshalBinary(t *testing.T) {
 	// Check little-endianness and sub-byte values (by changing [Tagged]).
 
 	o := LanHeaderFrame{Size:0x1fff, Tagged:true, Source:0x1fffffff}
-	b, _ := o.MarshalBinary()
+	b, err := o.MarshalBinary()
+	if err != nil {
+		t.Error("error", err)
+	}
+
 	s := fmt.Sprintf("%#v", b)
 
 	const Expected1 = "[]byte{0xff, 0x1f, 0x38, 0x0, 0xff, 0xff, 0xff, 0x1f}"
@@ -61,7 +73,11 @@ func TestLanHeaderFrame_MarshalBinary(t *testing.T) {
 	}
 
 	o = LanHeaderFrame{Size:0x1fff, Tagged:false, Source:0x1fffffff}
-	b, _ = o.MarshalBinary()
+	b, err = o.MarshalBinary()
+	if err != nil {
+		t.Error("error", err)
+	}
+
 	s = fmt.Sprintf("%#v", b)
 
 	const Expected2 = "[]byte{0xff, 0x1f, 0x18, 0x0, 0xff, 0xff, 0xff, 0x1f}"
@@ -75,7 +91,11 @@ func TestLanHeaderFrameAddress_MarshalBinary(t *testing.T) {
 	// Check little-endianness and sub-byte values (by changing [{Ack,Res}Required]).
 
 	o := LanHeaderFrameAddress{Target:0x1fffffffffffffff, AckRequired:true, ResRequired:true, Sequence:0x1f}
-	b, _ := o.MarshalBinary()
+	b, err := o.MarshalBinary()
+	if err != nil {
+		t.Error("error", err)
+	}
+
 	s := fmt.Sprintf("%#v", b)
 
 	const Expected1 = "[]byte{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x1f, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x3, 0x1f}"
@@ -85,7 +105,11 @@ func TestLanHeaderFrameAddress_MarshalBinary(t *testing.T) {
 	}
 
 	o = LanHeaderFrameAddress{Target:0x1fffffffffffffff, AckRequired:false, ResRequired:true, Sequence:0x1f}
-	b, _ = o.MarshalBinary()
+	b, err = o.MarshalBinary()
+	if err != nil {
+		t.Error("error", err)
+	}
+
 	s = fmt.Sprintf("%#v", b)
 
 	const Expected2 = "[]byte{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x1f, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x1, 0x1f}"
@@ -99,7 +123,11 @@ func TestLanHeaderProtocolHeader_MarshalBinary(t *testing.T) {
 	// Check little-endianness.
 
 	o := LanHeaderProtocolHeader{Type:0x1fff}
-	b, _ := o.MarshalBinary()
+	b, err := o.MarshalBinary()
+	if err != nil {
+		t.Error("error", err)
+	}
+
 	s := fmt.Sprintf("%#v", b)
 
 	const Expected = "[]byte{0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0xff, 0x1f, 0x0, 0x0}"
