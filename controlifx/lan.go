@@ -333,15 +333,15 @@ func NewPayloadOfType(t uint16) encoding.BinaryUnmarshaler {
 		StateService      = 3
 		StateHostInfo     = 13
 		StateHostFirmware = 15
-		StateWifiInfo 	  = 17
+		StateWifiInfo     = 17
 		StateWifiFirmware = 19
 		StatePower        = 22
-		StateLabel 		  = 25
-		StateVersion 	  = 33
-		StateInfo 		  = 35
-		StateLocation 	  = 50
-		StateGroup 	      = 53
-		EchoResponse 	  = 59
+		StateLabel        = 25
+		StateVersion      = 33
+		StateInfo         = 35
+		StateLocation     = 50
+		StateGroup        = 53
+		EchoResponse      = 59
 	)
 
 	switch t {
