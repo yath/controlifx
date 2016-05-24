@@ -6,7 +6,7 @@ import (
 )
 
 func TestLanMessage_MarshalBinary(t *testing.T) {
-	o := LanMessage{
+	o := SendableLanMessage{
 		header:LanHeader{
 			frame:LanHeaderFrame{
 				Size:0x1fff,
@@ -15,6 +15,7 @@ func TestLanMessage_MarshalBinary(t *testing.T) {
 			},
 			frameAddress:LanHeaderFrameAddress{
 				Target:0x1fffffffffffffff,
+				TargetMac:false,
 				AckRequired:true,
 				ResRequired:true,
 				Sequence:0x1f,
@@ -53,6 +54,7 @@ func TestLanHeader_MarshalBinary(t *testing.T) {
 			Source:0x1fffffff},
 		frameAddress:LanHeaderFrameAddress{
 			Target:0x1fffffffffffffff,
+			TargetMac:false,
 			AckRequired:true,
 			ResRequired:true,
 			Sequence:0x1f,
@@ -119,6 +121,7 @@ func TestLanHeaderFrameAddress_MarshalBinary(t *testing.T) {
 
 	o := LanHeaderFrameAddress{
 		Target:0x1fffffffffffffff,
+		TargetMac:false,
 		AckRequired:true,
 		ResRequired:true,
 		Sequence:0x1f,
@@ -138,6 +141,7 @@ func TestLanHeaderFrameAddress_MarshalBinary(t *testing.T) {
 
 	o = LanHeaderFrameAddress{
 		Target:0x1fffffffffffffff,
+		TargetMac:false,
 		AckRequired:false,
 		ResRequired:true,
 		Sequence:0x1f,
