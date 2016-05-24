@@ -78,7 +78,7 @@ func (o *ReceivableLanMessage) UnmarshalBinary(data []byte) error {
 }
 
 type LanHeader struct {
-	frame 		   LanHeaderFrame
+	frame          LanHeaderFrame
 	frameAddress   LanHeaderFrameAddress
 	protocolHeader LanHeaderProtocolHeader
 }
