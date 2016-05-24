@@ -14,12 +14,17 @@ const MessageRate = 20
 // The LAN protocol header is always 36 bytes long.
 const LanHeaderSize = 36
 
-type LanMessage struct {
-	header  LanHeader
-	payload encoding.BinaryMarshaler
+type BinaryEncoder interface {
+	encoding.BinaryMarshaler
+	encoding.BinaryUnmarshaler
 }
 
-func (o *LanMessage) Payload(payload encoding.BinaryMarshaler) {
+type LanMessage struct {
+	header  LanHeader
+	payload BinaryEncoder
+}
+
+func (o *LanMessage) Payload(payload BinaryEncoder) {
 	o.payload = payload
 
 	o.updateSize()
@@ -57,6 +62,12 @@ func (o LanMessage) MarshalBinary() (data []byte, err error) {
 	return
 }
 
+func (o *LanMessage) UnmarshalBinary(data []byte) error {
+	// TODO: implement
+
+	return nil
+}
+
 type LanHeader struct {
 	frame 		   LanHeaderFrame
 	frameAddress   LanHeaderFrameAddress
@@ -82,6 +93,12 @@ func (o LanHeader) MarshalBinary() (data []byte, err error) {
 	data = append(frame, append(frameAddress, protocolHeader...)...)
 
 	return
+}
+
+func (o *LanHeader) UnmarshalBinary(data []byte) error {
+	// TODO: implement
+
+	return nil
 }
 
 type LanHeaderFrame struct {
@@ -112,6 +129,14 @@ func (o LanHeaderFrame) MarshalBinary() (data []byte, _ error) {
 	binary.LittleEndian.PutUint32(data[4:], o.Source)
 
 	return
+}
+
+func (o *LanHeaderFrame) UnmarshalBinary(data []byte) error {
+	o.Size = binary.LittleEndian.Uint16(data[:2])
+	o.Tagged = (data[2] >> 5) & 0x1 == 1
+	o.Source = binary.LittleEndian.Uint32(data[4:])
+
+	return nil
 }
 
 type LanHeaderFrameAddress struct {
@@ -158,6 +183,12 @@ func (o LanHeaderFrameAddress) MarshalBinary() (data []byte, _ error) {
 	data[15] = o.Sequence
 
 	return
+}
+
+func (o *LanHeaderFrameAddress) UnmarshalBinary(data []byte) error {
+	// TODO: implement
+
+	return nil
 }
 
 type LanHeaderProtocolHeader struct {
@@ -344,7 +375,13 @@ func (o SetPowerLanMessage) MarshalBinary() ([]byte, error) {
 	return o.Level.MarshalBinary()
 }
 
-func (o LanDeviceMessageBuilder) SetPower(payload SetPowerLanMessage) LanMessage {
+func (o *SetPowerLanMessage) UnmarshalBinary(data []byte) error {
+	// TODO: implement
+
+	return nil
+}
+
+func (o LanDeviceMessageBuilder) SetPower(payload *SetPowerLanMessage) LanMessage {
 	const Type = 21
 
 	msg := o.buildNormalMessageOfType(Type)
@@ -372,7 +409,13 @@ func (o SetLabelLanMessage) MarshalBinary() ([]byte, error) {
 	return o.label.MarshalBinary()
 }
 
-func (o LanDeviceMessageBuilder) SetLabel(payload SetLabelLanMessage) LanMessage {
+func (o *SetLabelLanMessage) UnmarshalBinary(data []byte) error {
+	// TODO: implement
+
+	return nil
+}
+
+func (o LanDeviceMessageBuilder) SetLabel(payload *SetLabelLanMessage) LanMessage {
 	const Type = 24
 
 	msg := o.buildNormalMessageOfType(Type)
@@ -442,7 +485,13 @@ func (o EchoRequestLanMessage) MarshalBinary() ([]byte, error) {
 	return o.payload[:], nil
 }
 
-func (o LanDeviceMessageBuilder) EchoRequest(payload EchoRequestLanMessage) LanMessage {
+func (o *EchoRequestLanMessage) UnmarshalBinary(data []byte) error {
+	// TODO: implement
+
+	return nil
+}
+
+func (o LanDeviceMessageBuilder) EchoRequest(payload *EchoRequestLanMessage) LanMessage {
 	const Type = 58
 
 	msg := o.buildNormalMessageOfType(Type)

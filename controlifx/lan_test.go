@@ -23,7 +23,7 @@ func TestLanMessage_MarshalBinary(t *testing.T) {
 				Type:0x1fff,
 			},
 		},
-		payload:LanHeaderFrame{
+		payload:&LanHeaderFrame{
 			Size:0x1fff,
 			Tagged:true,
 			Source:0x1fffffff,
