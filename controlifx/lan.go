@@ -68,13 +68,13 @@ type ReceivableLanMessage struct {
 func (o *ReceivableLanMessage) UnmarshalBinary(data []byte) error {
 	// Header.
 	o.header = LanHeader{}
-	if err := o.header.UnmarshalBinary(data[:36]); err != nil {
+	if err := o.header.UnmarshalBinary(data[:LanHeaderSize]); err != nil {
 		return err
 	}
 
 	// Payload.
 	o.payload = NewPayloadOfType(o.header.protocolHeader.Type)
-	return o.payload.UnmarshalBinary(data[36:])
+	return o.payload.UnmarshalBinary(data[LanHeaderSize:])
 }
 
 type LanHeader struct {
