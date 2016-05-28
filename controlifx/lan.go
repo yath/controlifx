@@ -287,13 +287,13 @@ func (o powerLevel) MarshalBinary() (data []byte, err error) {
 
 type time uint64
 
-func (o time) Time() _time.Time {
+func (o time) Time() (_time.Time, error) {
 	// Check if value is over the max int64 size.
-	if o > 9223372036854775807 {
-		return _time.Time{}
+	if o > math.MaxInt64 {
+		return _time.Time{}, fmt.Errorf("time %d exceeds int64 max value", o)
 	}
 
-	return _time.Unix(0, int64(o))
+	return _time.Unix(0, int64(o)), nil
 }
 
 func (o time) MarshalBinary() (data []byte, _ error) {

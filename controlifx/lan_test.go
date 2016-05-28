@@ -2,8 +2,10 @@ package controlifx
 
 import (
 	"bytes"
-	"testing"
+	"math"
 	"reflect"
+	"testing"
+	_time "time"
 )
 
 func TestSendableLanMessage_MarshalBinary(t *testing.T) {
@@ -286,5 +288,141 @@ func TestLanHeaderProtocolHeader_UnmarshalBinary(t *testing.T) {
 
 	if !reflect.DeepEqual(expected, o) {
 		t.Errorf("expected '%#v', got '%#v'", expected, o)
+	}
+}
+
+func TestLabel_MarshalBinary(t *testing.T) {
+	o := label("hello world")
+
+	b, err := o.MarshalBinary()
+	if err != nil {
+		t.Error("error:", err)
+	}
+
+	expected := []byte{0x68, 0x65, 0x6c, 0x6c, 0x6f, 0x20, 0x77, 0x6f, 0x72,
+		0x6c, 0x64, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+		0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0}
+
+	if !bytes.Equal(expected, b) {
+		t.Errorf("expected '%#v', got '%#v'", expected, b)
+	}
+}
+
+func TestPort_MarshalBinary(t *testing.T) {
+	o := port(0x1fffffff)
+
+	b, err := o.MarshalBinary()
+	if err != nil {
+		t.Error("error:", err)
+	}
+
+	expected := []byte{0xff, 0xff, 0xff, 0x1f}
+
+	if !bytes.Equal(expected, b) {
+		t.Errorf("expected '%#v', got '%#v'", expected, b)
+	}
+}
+
+func TestPowerLevel_MarshalBinary(t *testing.T) {
+	o := powerLevel(0xffff)
+
+	b, err := o.MarshalBinary()
+	if err != nil {
+		t.Error("error:", err)
+	}
+
+	expected := []byte{0xff, 0xff}
+
+	if !bytes.Equal(expected, b) {
+		t.Errorf("expected '%#v', got '%#v'", expected, b)
+	}
+}
+
+func TestPowerLevel_MarshalBinary2(t *testing.T) {
+	o := powerLevel(0x0)
+
+	b, err := o.MarshalBinary()
+	if err != nil {
+		t.Error("error:", err)
+	}
+
+	expected := []byte{0x0, 0x0}
+
+	if !bytes.Equal(expected, b) {
+		t.Errorf("expected '%#v', got '%#v'", expected, b)
+	}
+}
+
+func TestPowerLevel_MarshalBinary3(t *testing.T) {
+	o := powerLevel(0x1fff)
+
+	_, err := o.MarshalBinary()
+	if err == nil {
+		t.Errorf("non 0 or 65535 value was erroneously allowed")
+	}
+}
+
+func TestTime_Time(t *testing.T) {
+	o := time(1464000000000000000)
+
+	time, err := o.Time()
+	if err != nil {
+		t.Error("error:", err)
+	}
+
+	expected := _time.Unix(0, 1464000000000000000)
+
+	if time != expected {
+		t.Errorf("expected '%#v', got '%#v'", expected, time)
+	}
+}
+
+func TestTime_Time2(t *testing.T) {
+	o := time(math.MaxInt64 + 1)
+
+	_, err := o.Time()
+	if err == nil {
+		t.Error("overflowing time was erroneously allowed")
+	}
+}
+
+func TestTime_MarshalBinary(t *testing.T) {
+	// 1464000000000000000
+	o := time(0x14512c3e4f2c0000)
+
+	b, err := o.MarshalBinary()
+	if err != nil {
+		t.Error("error:", err)
+	}
+
+	expected := []byte{0x00, 0x00, 0x2c, 0x4f, 0x3e, 0x2c, 0x51, 0x14}
+
+	if !bytes.Equal(expected, b) {
+		t.Errorf("expected '%#v', got '%#v'", expected, b)
+	}
+}
+
+func TestNewReceivablePayloadOfType(t *testing.T) {
+	o, err := NewReceivablePayloadOfType(3)
+	if err != nil {
+		t.Error("error:", o)
+	}
+
+	o, ok := o.(*StateServiceLanMessage)
+	if !ok {
+		t.Error("error: could not cast %T to StateServiceLanMessage", o)
+	}
+
+	expected := &StateServiceLanMessage{}
+
+	if reflect.TypeOf(expected) != reflect.TypeOf(o) {
+		t.Errorf("expected %T, got %T", expected, o)
+	}
+}
+
+func TestNewReceivablePayloadOfType2(t *testing.T) {
+	_, err := NewReceivablePayloadOfType(4)
+	if err == nil {
+		t.Error("invalid payload type did not error")
 	}
 }
