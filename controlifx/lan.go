@@ -534,7 +534,7 @@ func (o SetPowerLanMessage) MarshalBinary() ([]byte, error) {
 	return o.Level.MarshalBinary()
 }
 
-func (o LanDeviceMessageBuilder) SetPower(payload *SetPowerLanMessage) SendableLanMessage {
+func (o LanDeviceMessageBuilder) SetPower(payload SetPowerLanMessage) SendableLanMessage {
 	const Type = 21
 
 	msg := o.buildNormalMessageOfType(Type)
@@ -568,7 +568,7 @@ func (o SetLabelLanMessage) MarshalBinary() ([]byte, error) {
 	return o.label.MarshalBinary()
 }
 
-func (o LanDeviceMessageBuilder) SetLabel(payload *SetLabelLanMessage) SendableLanMessage {
+func (o LanDeviceMessageBuilder) SetLabel(payload SetLabelLanMessage) SendableLanMessage {
 	const Type = 24
 
 	msg := o.buildNormalMessageOfType(Type)
@@ -696,7 +696,7 @@ func (o EchoRequestLanMessage) MarshalBinary() ([]byte, error) {
 	return o.payload[:], nil
 }
 
-func (o LanDeviceMessageBuilder) EchoRequest(payload *EchoRequestLanMessage) SendableLanMessage {
+func (o LanDeviceMessageBuilder) EchoRequest(payload EchoRequestLanMessage) SendableLanMessage {
 	const Type = 58
 
 	msg := o.buildNormalMessageOfType(Type)
@@ -712,6 +712,156 @@ type EchoResponseLanMessage struct {
 
 func (o *EchoResponseLanMessage) UnmarshalBinary(data []byte) error {
 	copy(o.payload[:], data[:64])
+
+	return nil
+}
+
+type HSBK struct {
+	hue        uint16
+	saturation uint16
+	brightness uint16
+	kelvin     uint16
+}
+
+func (o HSBK) MarshalBinary() (data []byte, _ error) {
+	data = make([]byte, 8)
+
+	// Hue.
+	binary.LittleEndian.PutUint16(data[:2], o.hue)
+
+	// Saturation.
+	binary.LittleEndian.PutUint16(data[2:4], o.saturation)
+
+	// Brightness.
+	binary.LittleEndian.PutUint16(data[4:6], o.brightness)
+
+	// Kelvin.
+	binary.LittleEndian.PutUint16(data[6:], o.kelvin)
+
+	return
+}
+
+func (o *HSBK) UnmarshalBinary(data []byte) error {
+	// Hue.
+	o.hue = binary.LittleEndian.Uint16(data[:2])
+
+	// Saturation.
+	o.saturation = binary.LittleEndian.Uint16(data[2:4])
+
+	// Brightness.
+	o.brightness = binary.LittleEndian.Uint16(data[4:6])
+
+	// Kelvin.
+	o.kelvin = binary.LittleEndian.Uint16(data[6:])
+
+	return nil
+}
+
+func (o LanDeviceMessageBuilder) LightGet() SendableLanMessage {
+	const Type = 101
+
+	return o.buildNormalMessageOfType(Type)
+}
+
+type LightSetColorLanMessage struct {
+	color    HSBK
+	duration uint32
+}
+
+func (o LightSetColorLanMessage) MarshalBinary() (data []byte, err error) {
+	data = make([]byte, 12)
+
+	// Color.
+	color, err := o.color.MarshalBinary()
+	if err != nil {
+		return
+	}
+
+	copy(data[:8], color)
+
+	// Duration.
+	binary.LittleEndian.PutUint32(data[8:], o.duration)
+
+	return
+}
+
+func (o LanDeviceMessageBuilder) LightSetColor(payload LightSetColorLanMessage) SendableLanMessage {
+	const Type = 102
+
+	msg := o.buildNormalMessageOfType(Type)
+
+	msg.Payload(payload)
+
+	return msg
+}
+
+type LightStateLanMessage struct {
+	color HSBK
+	power powerLevel
+	label label
+}
+
+func (o *LightStateLanMessage) UnmarshalBinary(data []byte) error {
+	// Color.
+	err := o.color.UnmarshalBinary(data[:8])
+	if err != nil {
+		return err
+	}
+
+	// Power.
+	o.power = powerLevel(binary.LittleEndian.Uint16(data[8:10]))
+
+	// Label.
+	o.label = label(data[10:])
+
+	return nil
+}
+
+func (o LanDeviceMessageBuilder) LightGetPower() SendableLanMessage {
+	const Type = 116
+
+	return o.buildNormalMessageOfType(Type)
+}
+
+type LightSetPowerLanMessage struct {
+	level    powerLevel
+	duration uint32
+}
+
+func (o LightSetPowerLanMessage) MarshalBinary() (data []byte, err error) {
+	data = make([]byte, 6)
+
+	// Level.
+	level, err := o.level.MarshalBinary()
+	if err != nil {
+		return
+	}
+
+	copy(level[:2], level)
+
+	// Duration.
+	binary.LittleEndian.PutUint32(data[2:], o.duration)
+
+	return
+}
+
+
+func (o LanDeviceMessageBuilder) LightSetPower(payload LightSetPowerLanMessage) SendableLanMessage {
+	const Type = 117
+
+	msg := o.buildNormalMessageOfType(Type)
+
+	msg.Payload(payload)
+
+	return msg
+}
+
+type LightStatePowerLanMessage struct {
+	level powerLevel
+}
+
+func (o *LightStatePowerLanMessage) UnmarshalBinary(data []byte) error {
+	o.level = powerLevel(binary.LittleEndian.Uint16(data))
 
 	return nil
 }
