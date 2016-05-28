@@ -3,6 +3,7 @@ package controlifx
 import (
 	"encoding"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	_time "time"
 	"math"
@@ -73,7 +74,13 @@ func (o *ReceivableLanMessage) UnmarshalBinary(data []byte) error {
 	}
 
 	// Payload.
-	o.payload = NewPayloadOfType(o.header.protocolHeader.Type)
+	payload, err := NewReceivablePayloadOfType(o.header.protocolHeader.Type)
+	if err != nil {
+		return err
+	}
+
+	o.payload = payload
+
 	return o.payload.UnmarshalBinary(data[LanHeaderSize:])
 }
 
@@ -170,9 +177,6 @@ func (o *LanHeaderFrame) UnmarshalBinary(data []byte) error {
 
 type LanHeaderFrameAddress struct {
 	Target      uint64
-	// Not part of the protocol, but specifies if the Target is a 6 byte MAC
-	// address for binary marshaling purposes.
-	TargetMac   bool
 	AckRequired bool
 	ResRequired bool
 	Sequence    uint8
@@ -181,21 +185,8 @@ type LanHeaderFrameAddress struct {
 func (o LanHeaderFrameAddress) MarshalBinary() (data []byte, _ error) {
 	data = make([]byte, 16)
 
-	littleEndianPutUint48 := func(b []byte, v uint64) {
-		b[0] = byte(v)
-		b[1] = byte(v >> 8)
-		b[2] = byte(v >> 16)
-		b[3] = byte(v >> 24)
-		b[4] = byte(v >> 32)
-		b[5] = byte(v >> 40)
-	}
-
 	// Target.
-	if o.TargetMac {
-		littleEndianPutUint48(data[:6], o.Target)
-	} else {
-		binary.LittleEndian.PutUint64(data[:8], o.Target)
-	}
+	binary.LittleEndian.PutUint64(data[:8], o.Target)
 
 	// 0000 0000
 
@@ -218,22 +209,7 @@ func (o LanHeaderFrameAddress) MarshalBinary() (data []byte, _ error) {
 }
 
 func (o *LanHeaderFrameAddress) UnmarshalBinary(data []byte) error {
-	littleEndianUint48 := func(b []byte) uint64 {
-		return uint64(b[0]) | uint64(b[1]) << 8 | uint64(b[2]) << 16 |
-				uint64(b[3]) << 24 | uint64(b[4]) << 32 | uint64(b[5]) << 40
-	}
-
-	// Target. There may be issues if an 8 byte device address is used where the
-	// last 2 bytes are 0x00, but this seems pretty rare, and the Target from a
-	// response is probably not that important anyway. Really, there is no way
-	// for the client to know if it's a MAC address or some other 8 byte long
-	// address unless it looks at the sequence to map it with the original
-	// request.
-	if binary.LittleEndian.Uint16(data[6:8]) == 0 {
-		o.Target = binary.LittleEndian.Uint64(data[:8])
-	} else {
-		o.Target = littleEndianUint48(data[:6])
-	}
+	o.Target = binary.LittleEndian.Uint64(data[:8])
 
 	// 0000 00??
 
@@ -304,7 +280,7 @@ func (o powerLevel) MarshalBinary() (data []byte, err error) {
 
 	data = make([]byte, 2)
 
-	binary.LittleEndian.PutUint16(data, uint16(o))
+	binary.LittleEndian.PutUint16(data[:], uint16(o))
 
 	return
 }
@@ -328,7 +304,7 @@ func (o time) MarshalBinary() (data []byte, _ error) {
 	return
 }
 
-func NewPayloadOfType(t uint16) encoding.BinaryUnmarshaler {
+func NewReceivablePayloadOfType(t uint16) (encoding.BinaryUnmarshaler, error) {
 	const (
 		StateService      = 3
 		StateHostInfo     = 13
@@ -342,35 +318,41 @@ func NewPayloadOfType(t uint16) encoding.BinaryUnmarshaler {
 		StateLocation     = 50
 		StateGroup        = 53
 		EchoResponse      = 59
+		LightState        = 107
+		LightStatePower   = 118
 	)
 
 	switch t {
 	case StateService:
-		return &StateServiceLanMessage{}
+		return &StateServiceLanMessage{}, nil
 	case StateHostInfo:
-		return &StateHostInfoLanMessage{}
+		return &StateHostInfoLanMessage{}, nil
 	case StateHostFirmware:
-		return &StateHostFirmwareLanMessage{}
+		return &StateHostFirmwareLanMessage{}, nil
 	case StateWifiInfo:
-		return &StateWifiInfoLanMessage{}
+		return &StateWifiInfoLanMessage{}, nil
 	case StateWifiFirmware:
-		return &StateWifiFirmwareLanMessage{}
+		return &StateWifiFirmwareLanMessage{}, nil
 	case StatePower:
-		return &StatePowerLanMessage{}
+		return &StatePowerLanMessage{}, nil
 	case StateLabel:
-		return &StateLabelLanMessage{}
+		return &StateLabelLanMessage{}, nil
 	case StateVersion:
-		return &StateVersionLanMessage{}
+		return &StateVersionLanMessage{}, nil
 	case StateInfo:
-		return &StateInfoLanMessage{}
+		return &StateInfoLanMessage{}, nil
 	case StateLocation:
-		return &StateLocationLanMessage{}
+		return &StateLocationLanMessage{}, nil
 	case StateGroup:
-		return &StateGroupLanMessage{}
+		return &StateGroupLanMessage{}, nil
 	case EchoResponse:
-		return &EchoResponseLanMessage{}
+		return &EchoResponseLanMessage{}, nil
+	case LightState:
+		return &LightStatePowerLanMessage{}, nil
+	case LightStatePower:
+		return &LightStatePowerLanMessage{}, nil
 	default:
-		return nil
+		return nil, errors.New("cannot create new payload of type; is it binary encodable?")
 	}
 }
 
@@ -769,7 +751,7 @@ type LightSetColorLanMessage struct {
 }
 
 func (o LightSetColorLanMessage) MarshalBinary() (data []byte, err error) {
-	data = make([]byte, 12)
+	data = make([]byte, 13)
 
 	// Color.
 	color, err := o.color.MarshalBinary()
@@ -777,10 +759,10 @@ func (o LightSetColorLanMessage) MarshalBinary() (data []byte, err error) {
 		return
 	}
 
-	copy(data[:8], color)
+	copy(data[1:9], color)
 
 	// Duration.
-	binary.LittleEndian.PutUint32(data[8:], o.duration)
+	binary.LittleEndian.PutUint32(data[9:], o.duration)
 
 	return
 }
@@ -837,7 +819,7 @@ func (o LightSetPowerLanMessage) MarshalBinary() (data []byte, err error) {
 		return
 	}
 
-	copy(level[:2], level)
+	copy(data[:2], level)
 
 	// Duration.
 	binary.LittleEndian.PutUint32(data[2:], o.duration)
