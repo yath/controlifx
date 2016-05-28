@@ -117,8 +117,6 @@ func TestLanHeader_MarshalBinary(t *testing.T) {
 }
 
 func TestLanHeaderFrame_MarshalBinary(t *testing.T) {
-	// Check little-endianness and sub-byte values (by changing [Tagged]).
-
 	o := LanHeaderFrame{
 		Size:0x1fff,
 		Tagged:true,
@@ -130,33 +128,53 @@ func TestLanHeaderFrame_MarshalBinary(t *testing.T) {
 		t.Error("error:", err)
 	}
 
-	expected1 := []byte{0xff, 0x1f, 0x38, 0x0, 0xff, 0xff, 0xff, 0x1f}
+	expected := []byte{0xff, 0x1f, 0x38, 0x0, 0xff, 0xff, 0xff, 0x1f}
 
-	if !bytes.Equal(expected1, b) {
-		t.Errorf("expected '%#v', got '%#v'", expected1, b)
+	if !bytes.Equal(expected, b) {
+		t.Errorf("expected '%#v', got '%#v'", expected, b)
 	}
+}
 
-	o = LanHeaderFrame{
+func TestLanHeaderFrame_MarshalBinary2(t *testing.T) {
+	o := LanHeaderFrame{
 		Size:0x1fff,
 		Tagged:false,
 		Source:0x1fffffff,
 	}
 
-	b, err = o.MarshalBinary()
+	b, err := o.MarshalBinary()
 	if err != nil {
 		t.Error("error:", err)
 	}
 
-	expected2 := []byte{0xff, 0x1f, 0x18, 0x0, 0xff, 0xff, 0xff, 0x1f}
+	expected := []byte{0xff, 0x1f, 0x18, 0x0, 0xff, 0xff, 0xff, 0x1f}
 
-	if !bytes.Equal(expected2, b) {
-		t.Errorf("expected '%#v', got '%#v'", expected2, b)
+	if !bytes.Equal(expected, b) {
+		t.Errorf("expected '%#v', got '%#v'", expected, b)
+	}
+}
+
+func TestLanHeaderFrame_UnmarshalBinary(t *testing.T) {
+	o := LanHeaderFrame{}
+
+	b := []byte{0xff, 0x1f, 0x38, 0x0, 0xff, 0xff, 0xff, 0x1f}
+
+	if err := o.UnmarshalBinary(b); err != nil {
+		t.Error("error:", err)
+	}
+
+	expected := LanHeaderFrame{
+		Size:0x1fff,
+		Tagged:true,
+		Source:0x1fffffff,
+	}
+
+	if !reflect.DeepEqual(expected, o) {
+		t.Errorf("expected '%#v', got '%#v'", expected, o)
 	}
 }
 
 func TestLanHeaderFrameAddress_MarshalBinary(t *testing.T) {
-	// Check little-endianness and sub-byte values (by changing [{Ack,Res}Required]).
-
 	o := LanHeaderFrameAddress{
 		Target:0x1fffffffffffffff,
 		AckRequired:true,
@@ -169,36 +187,58 @@ func TestLanHeaderFrameAddress_MarshalBinary(t *testing.T) {
 		t.Error("error:", err)
 	}
 
-	expected1 := []byte{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x1f, 0x0,
+	expected := []byte{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x1f, 0x0,
 		0x0, 0x0, 0x0, 0x0, 0x0, 0x3, 0x1f}
 
-	if !bytes.Equal(expected1, b) {
-		t.Errorf("expected '%#v', got '%#v'", expected1, b)
+	if !bytes.Equal(expected, b) {
+		t.Errorf("expected '%#v', got '%#v'", expected, b)
 	}
+}
 
-	o = LanHeaderFrameAddress{
+func TestLanHeaderFrameAddress_MarshalBinary2(t *testing.T) {
+	o := LanHeaderFrameAddress{
 		Target:0x1fffffffffffffff,
 		AckRequired:false,
 		ResRequired:true,
 		Sequence:0x1f,
 	}
 
-	b, err = o.MarshalBinary()
+	b, err := o.MarshalBinary()
 	if err != nil {
 		t.Error("error:", err)
 	}
 
-	expected2 := []byte{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x1f, 0x0,
+	expected := []byte{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x1f, 0x0,
 		0x0, 0x0, 0x0, 0x0, 0x0, 0x1, 0x1f}
 
-	if !bytes.Equal(expected2, b) {
-		t.Errorf("expected '%#v', got '%#v'", expected2, b)
+	if !bytes.Equal(expected, b) {
+		t.Errorf("expected '%#v', got '%#v'", expected, b)
+	}
+}
+
+func TestLanHeaderFrameAddress_UnmarshalBinary(t *testing.T) {
+	o := LanHeaderFrameAddress{}
+
+	b := []byte{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x1f, 0x0, 0x0, 0x0,
+		0x0, 0x0, 0x0, 0x3, 0x1f}
+
+	if err := o.UnmarshalBinary(b); err != nil {
+		t.Error("error:", err)
+	}
+
+	expected := LanHeaderFrameAddress{
+		Target:0x1fffffffffffffff,
+		AckRequired:true,
+		ResRequired:true,
+		Sequence:0x1f,
+	}
+
+	if !reflect.DeepEqual(expected, o) {
+		t.Errorf("expected '%#v', got '%#v'", expected, o)
 	}
 }
 
 func TestLanHeaderProtocolHeader_MarshalBinary(t *testing.T) {
-	// Check little-endianness.
-
 	o := LanHeaderProtocolHeader{
 		Type:0x1fff,
 	}
@@ -213,5 +253,23 @@ func TestLanHeaderProtocolHeader_MarshalBinary(t *testing.T) {
 
 	if !bytes.Equal(expected, b) {
 		t.Errorf("expected '%#v', got '%#v'", expected, b)
+	}
+}
+
+func TestLanHeaderProtocolHeader_UnmarshalBinary(t *testing.T) {
+	o := LanHeaderProtocolHeader{}
+
+	b := []byte{0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0xff, 0x1f, 0x0, 0x0}
+
+	if err := o.UnmarshalBinary(b); err != nil {
+		t.Error("error:", err)
+	}
+
+	expected := LanHeaderProtocolHeader{
+		Type:0x1fff,
+	}
+
+	if !reflect.DeepEqual(expected, o) {
+		t.Errorf("expected '%#v', got '%#v'", expected, o)
 	}
 }
