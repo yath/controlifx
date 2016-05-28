@@ -408,15 +408,8 @@ func TestNewReceivablePayloadOfType(t *testing.T) {
 		t.Error("error:", o)
 	}
 
-	o, ok := o.(*StateServiceLanMessage)
-	if !ok {
-		t.Error("error: could not cast %T to StateServiceLanMessage", o)
-	}
-
-	expected := &StateServiceLanMessage{}
-
-	if reflect.TypeOf(expected) != reflect.TypeOf(o) {
-		t.Errorf("expected %T, got %T", expected, o)
+	if _, ok := o.(*StateServiceLanMessage); !ok {
+		t.Errorf("error: could not cast %T to StateServiceLanMessage", o)
 	}
 }
 
@@ -424,5 +417,334 @@ func TestNewReceivablePayloadOfType2(t *testing.T) {
 	_, err := NewReceivablePayloadOfType(4)
 	if err == nil {
 		t.Error("invalid payload type did not error")
+	}
+}
+
+func TestLanDeviceMessageBuilder_Tagged(t *testing.T) {
+	o := LanDeviceMessageBuilder{
+		Target:0x1,
+	}
+
+	if !o.Tagged() {
+		t.Error("target was specified but Tagged() returned false")
+	}
+}
+
+func TestLanDeviceMessageBuilder_Tagged2(t *testing.T) {
+	o := LanDeviceMessageBuilder{}
+
+	if o.Tagged() {
+		t.Error("target was not specified but Tagged() returned true")
+	}
+}
+
+func TestLanDeviceMessageBuilder_GetService(t *testing.T) {
+	o := LanDeviceMessageBuilder{
+		Source:0x1fffffff,
+		Target:0x1fffffffffffffff,
+		AckRequired:true,
+		ResRequired:true,
+		Sequence:0x1f,
+	}
+
+	m := o.GetService()
+
+	expected := SendableLanMessage{
+		header:LanHeader{
+			frame:LanHeaderFrame{
+				Size:LanHeaderSize,
+				Tagged:true,
+				Source:0x1fffffff,
+			},
+			frameAddress:LanHeaderFrameAddress{
+				Target:0x1fffffffffffffff,
+				AckRequired:true,
+				ResRequired:true,
+				Sequence:0x1f,
+			},
+			protocolHeader:LanHeaderProtocolHeader{
+				Type:2,
+			},
+		},
+	}
+
+	if !reflect.DeepEqual(expected, m) {
+		t.Errorf("expected '%#v', got '%#v'", expected, m)
+	}
+}
+
+func TestStateServiceLanMessage_UnmarshalBinary(t *testing.T) {
+	o := StateServiceLanMessage{}
+
+	b := []byte{0xff, 0xff, 0xff, 0xff, 0x1f}
+
+	if err := o.UnmarshalBinary(b); err != nil {
+		t.Error("error:", err)
+	}
+
+	expected := StateServiceLanMessage{
+		Service:0xff,
+		Port:0x1fffffff,
+	}
+
+	if !reflect.DeepEqual(expected, o) {
+		t.Errorf("expected '%#v', got '%#v'", expected, o)
+	}
+}
+
+func TestLanDeviceMessageBuilder_GetHostInfo(t *testing.T) {
+	o := LanDeviceMessageBuilder{
+		Source:0x1fffffff,
+		Target:0x1fffffffffffffff,
+		AckRequired:true,
+		ResRequired:true,
+		Sequence:0x1f,
+	}
+
+	m := o.GetHostInfo()
+
+	expected := SendableLanMessage{
+		header:LanHeader{
+			frame:LanHeaderFrame{
+				Size:LanHeaderSize,
+				Tagged:true,
+				Source:0x1fffffff,
+			},
+			frameAddress:LanHeaderFrameAddress{
+				Target:0x1fffffffffffffff,
+				AckRequired:true,
+				ResRequired:true,
+				Sequence:0x1f,
+			},
+			protocolHeader:LanHeaderProtocolHeader{
+				Type:12,
+			},
+		},
+	}
+
+	if !reflect.DeepEqual(expected, m) {
+		t.Errorf("expected '%#v', got '%#v'", expected, m)
+	}
+}
+
+func TestStateHostInfoLanMessage_UnmarshalBinary(t *testing.T) {
+	o := StateHostInfoLanMessage{}
+
+	b := []byte{0xdb, 0x0f, 0x49, 0x40, 0xff, 0xff, 0xff, 0x1f, 0xff, 0xff,
+		0xff, 0x1f}
+
+	if err := o.UnmarshalBinary(b); err != nil {
+		t.Error("error:", err)
+	}
+
+	expected := StateHostInfoLanMessage{
+		Signal:3.1415927,
+		Tx:0x1fffffff,
+		Rx:0x1fffffff,
+	}
+
+	if !reflect.DeepEqual(expected, o) {
+		t.Errorf("expected '%#v', got '%#v'", expected, o)
+	}
+}
+
+func TestLanDeviceMessageBuilder_GetHostFirmware(t *testing.T) {
+	o := LanDeviceMessageBuilder{
+		Source:0x1fffffff,
+		Target:0x1fffffffffffffff,
+		AckRequired:true,
+		ResRequired:true,
+		Sequence:0x1f,
+	}
+
+	m := o.GetHostFirmware()
+
+	expected := SendableLanMessage{
+		header:LanHeader{
+			frame:LanHeaderFrame{
+				Size:LanHeaderSize,
+				Tagged:true,
+				Source:0x1fffffff,
+			},
+			frameAddress:LanHeaderFrameAddress{
+				Target:0x1fffffffffffffff,
+				AckRequired:true,
+				ResRequired:true,
+				Sequence:0x1f,
+			},
+			protocolHeader:LanHeaderProtocolHeader{
+				Type:14,
+			},
+		},
+	}
+
+	if !reflect.DeepEqual(expected, m) {
+		t.Errorf("expected '%#v', got '%#v'", expected, m)
+	}
+}
+
+func TestStateHostFirmwareLanMessage_UnmarshalBinary(t *testing.T) {
+	o := StateHostFirmwareLanMessage{}
+
+	b := []byte{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x1f, 0xff, 0xff,
+		0xff, 0x1f}
+
+	if err := o.UnmarshalBinary(b); err != nil {
+		t.Error("error:", err)
+	}
+
+	expected := StateHostFirmwareLanMessage{
+		Build:0x1fffffffffffffff,
+		Version:0x1fffffff,
+	}
+
+	if !reflect.DeepEqual(expected, o) {
+		t.Errorf("expected '%#v', got '%#v'", expected, o)
+	}
+}
+
+func TestLanDeviceMessageBuilder_GetWifiInfo(t *testing.T) {
+	o := LanDeviceMessageBuilder{
+		Source:0x1fffffff,
+		Target:0x1fffffffffffffff,
+		AckRequired:true,
+		ResRequired:true,
+		Sequence:0x1f,
+	}
+
+	m := o.GetWifiInfo()
+
+	expected := SendableLanMessage{
+		header:LanHeader{
+			frame:LanHeaderFrame{
+				Size:LanHeaderSize,
+				Tagged:true,
+				Source:0x1fffffff,
+			},
+			frameAddress:LanHeaderFrameAddress{
+				Target:0x1fffffffffffffff,
+				AckRequired:true,
+				ResRequired:true,
+				Sequence:0x1f,
+			},
+			protocolHeader:LanHeaderProtocolHeader{
+				Type:16,
+			},
+		},
+	}
+
+	if !reflect.DeepEqual(expected, m) {
+		t.Errorf("expected '%#v', got '%#v'", expected, m)
+	}
+}
+
+func TestStateWifiInfoLanMessage_UnmarshalBinary(t *testing.T) {
+	o := StateWifiInfoLanMessage{}
+
+	b := []byte{0xdb, 0x0f, 0x49, 0x40, 0xff, 0xff, 0xff, 0x1f, 0xff, 0xff,
+		0xff, 0x1f}
+
+	if err := o.UnmarshalBinary(b); err != nil {
+		t.Error("error:", err)
+	}
+
+	expected := StateWifiInfoLanMessage{
+		Signal:3.1415927,
+		Tx:0x1fffffff,
+		Rx:0x1fffffff,
+	}
+
+	if !reflect.DeepEqual(expected, o) {
+		t.Errorf("expected '%#v', got '%#v'", expected, o)
+	}
+}
+
+func TestLanDeviceMessageBuilder_GetWifiFirmware(t *testing.T) {
+	o := LanDeviceMessageBuilder{
+		Source:0x1fffffff,
+		Target:0x1fffffffffffffff,
+		AckRequired:true,
+		ResRequired:true,
+		Sequence:0x1f,
+	}
+
+	m := o.GetWifiFirmware()
+
+	expected := SendableLanMessage{
+		header:LanHeader{
+			frame:LanHeaderFrame{
+				Size:LanHeaderSize,
+				Tagged:true,
+				Source:0x1fffffff,
+			},
+			frameAddress:LanHeaderFrameAddress{
+				Target:0x1fffffffffffffff,
+				AckRequired:true,
+				ResRequired:true,
+				Sequence:0x1f,
+			},
+			protocolHeader:LanHeaderProtocolHeader{
+				Type:18,
+			},
+		},
+	}
+
+	if !reflect.DeepEqual(expected, m) {
+		t.Errorf("expected '%#v', got '%#v'", expected, m)
+	}
+}
+
+func TestStateWifiFirmwareLanMessage_UnmarshalBinary(t *testing.T) {
+	o := StateWifiFirmwareLanMessage{}
+
+	b := []byte{0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x1f, 0xff, 0xff,
+		0xff, 0x1f}
+
+	if err := o.UnmarshalBinary(b); err != nil {
+		t.Error("error:", err)
+	}
+
+	expected := StateWifiFirmwareLanMessage{
+		Build:0x1fffffffffffffff,
+		Version:0x1fffffff,
+	}
+
+	if !reflect.DeepEqual(expected, o) {
+		t.Errorf("expected '%#v', got '%#v'", expected, o)
+	}
+}
+
+func TestLanDeviceMessageBuilder_GetPower(t *testing.T) {
+	o := LanDeviceMessageBuilder{
+		Source:0x1fffffff,
+		Target:0x1fffffffffffffff,
+		AckRequired:true,
+		ResRequired:true,
+		Sequence:0x1f,
+	}
+
+	m := o.GetPower()
+
+	expected := SendableLanMessage{
+		header:LanHeader{
+			frame:LanHeaderFrame{
+				Size:LanHeaderSize,
+				Tagged:true,
+				Source:0x1fffffff,
+			},
+			frameAddress:LanHeaderFrameAddress{
+				Target:0x1fffffffffffffff,
+				AckRequired:true,
+				ResRequired:true,
+				Sequence:0x1f,
+			},
+			protocolHeader:LanHeaderProtocolHeader{
+				Type:20,
+			},
+		},
+	}
+
+	if !reflect.DeepEqual(expected, m) {
+		t.Errorf("expected '%#v', got '%#v'", expected, m)
 	}
 }
