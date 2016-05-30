@@ -1311,7 +1311,7 @@ func TestHSBK_MarshalBinary(t *testing.T) {
 		hue:0x1fff,
 		saturation:0x2fff,
 		brightness:0x3fff,
-		kelvin:0x4fff,
+		kelvin:0x1f40,
 	}
 
 	b, err := o.MarshalBinary()
@@ -1319,10 +1319,38 @@ func TestHSBK_MarshalBinary(t *testing.T) {
 		t.Error("error:", err)
 	}
 
-	expected := []byte{0xff, 0x1f, 0xff, 0x2f, 0xff, 0x3f, 0xff, 0x4f}
+	expected := []byte{0xff, 0x1f, 0xff, 0x2f, 0xff, 0x3f, 0x40, 0x1f}
 
 	if !bytes.Equal(expected, b) {
 		t.Errorf("expected '%#v', got '%#v'", expected, b)
+	}
+}
+
+func TestHSBK_MarshalBinary2(t *testing.T) {
+	o := HSBK{
+		hue:0x1fff,
+		saturation:0x2fff,
+		brightness:0x3fff,
+		kelvin:2499,
+	}
+
+	_, err := o.MarshalBinary()
+	if err == nil {
+		t.Error("color temperature outside range was erroneously allowed")
+	}
+}
+
+func TestHSBK_MarshalBinary3(t *testing.T) {
+	o := HSBK{
+		hue:0x1fff,
+		saturation:0x2fff,
+		brightness:0x3fff,
+		kelvin:9001,
+	}
+
+	_, err := o.MarshalBinary()
+	if err == nil {
+		t.Error("color temperature outside range was erroneously allowed")
 	}
 }
 
@@ -1388,7 +1416,7 @@ func TestLightSetColorLanMessage_MarshalBinary(t *testing.T) {
 			hue:0x1fff,
 			saturation:0x2fff,
 			brightness:0x3fff,
-			kelvin:0x4fff,
+			kelvin:0x1f40,
 		},
 		duration:0x1fffffff,
 	}
@@ -1398,7 +1426,7 @@ func TestLightSetColorLanMessage_MarshalBinary(t *testing.T) {
 		t.Error("error:", err)
 	}
 
-	expected := []byte{0x0, 0xff, 0x1f, 0xff, 0x2f, 0xff, 0x3f, 0xff, 0x4f,
+	expected := []byte{0x0, 0xff, 0x1f, 0xff, 0x2f, 0xff, 0x3f, 0x40, 0x1f,
 		0xff, 0xff, 0xff, 0x1f}
 
 	if !bytes.Equal(expected, b) {

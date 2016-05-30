@@ -706,7 +706,7 @@ type HSBK struct {
 	kelvin     uint16
 }
 
-func (o HSBK) MarshalBinary() (data []byte, _ error) {
+func (o HSBK) MarshalBinary() (data []byte, err error) {
 	data = make([]byte, 8)
 
 	// Hue.
@@ -717,6 +717,10 @@ func (o HSBK) MarshalBinary() (data []byte, _ error) {
 
 	// Brightness.
 	binary.LittleEndian.PutUint16(data[4:6], o.brightness)
+
+	if o.kelvin < 2500 || o.kelvin > 9000 {
+		return nil, fmt.Errorf("color temperature %d out of range (2500..9000)", o.kelvin)
+	}
 
 	// Kelvin.
 	binary.LittleEndian.PutUint16(data[6:], o.kelvin)
