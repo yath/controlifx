@@ -1,6 +1,7 @@
 package controlifx
 
 import (
+	"bytes"
 	"encoding"
 	"encoding/binary"
 	"errors"
@@ -565,7 +566,7 @@ type StateLabelLanMessage struct {
 }
 
 func (o *StateLabelLanMessage) UnmarshalBinary(data []byte) error {
-	o.label = label(data)
+	o.label = label(bytes.TrimRight(data, "\x00"))
 
 	return nil
 }
@@ -587,10 +588,10 @@ func (o *StateVersionLanMessage) UnmarshalBinary(data []byte) error {
 	o.vendor = binary.LittleEndian.Uint32(data[:4])
 
 	// Product.
-	o.product = binary.LittleEndian.Uint32(data[4:12])
+	o.product = binary.LittleEndian.Uint32(data[4:8])
 
 	// Version.
-	o.version = binary.LittleEndian.Uint32(data[12:])
+	o.version = binary.LittleEndian.Uint32(data[8:])
 
 	return nil
 }
@@ -612,10 +613,10 @@ func (o *StateInfoLanMessage) UnmarshalBinary(data []byte) error {
 	o.time = time(binary.LittleEndian.Uint64(data[:8]))
 
 	// Uptime.
-	o.uptime = binary.LittleEndian.Uint64(data[8:24])
+	o.uptime = binary.LittleEndian.Uint64(data[8:16])
 
 	// Downtime.
-	o.downtime = binary.LittleEndian.Uint64(data[24:])
+	o.downtime = binary.LittleEndian.Uint64(data[16:])
 
 	return nil
 }
@@ -637,7 +638,7 @@ func (o *StateLocationLanMessage) UnmarshalBinary(data []byte) error {
 	copy(o.location[:], data[:16])
 
 	// Label.
-	o.label = label(data[16:48])
+	o.label = label(bytes.TrimRight(data[16:48], "\x00"))
 
 	// Updated at.
 	o.updatedAt = time(binary.LittleEndian.Uint64(data[48:]))
@@ -662,7 +663,7 @@ func (o *StateGroupLanMessage) UnmarshalBinary(data []byte) error {
 	copy(o.group[:], data[:16])
 
 	// Label.
-	o.label = label(data[16:48])
+	o.label = label(bytes.TrimRight(data[16:48], "\x00"))
 
 	// Updated at.
 	o.updatedAt = time(binary.LittleEndian.Uint64(data[48:]))
@@ -794,7 +795,7 @@ func (o *LightStateLanMessage) UnmarshalBinary(data []byte) error {
 	o.power = powerLevel(binary.LittleEndian.Uint16(data[8:10]))
 
 	// Label.
-	o.label = label(data[10:])
+	o.label = label(bytes.TrimRight(data[10:], "\x00"))
 
 	return nil
 }
