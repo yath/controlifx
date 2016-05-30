@@ -438,6 +438,41 @@ func TestLanDeviceMessageBuilder_Tagged2(t *testing.T) {
 	}
 }
 
+func TestLanDeviceMessageBuilder_buildNormalMessageOfType(t *testing.T) {
+	o := LanDeviceMessageBuilder{
+		Source:0x1fffffff,
+		Target:0x1fffffffffffffff,
+		AckRequired:true,
+		ResRequired:true,
+		Sequence:0x1f,
+	}
+
+	m := o.buildNormalMessageOfType(2)
+
+	expected := SendableLanMessage{
+		header:LanHeader{
+			frame:LanHeaderFrame{
+				Size:LanHeaderSize,
+				Tagged:true,
+				Source:0x1fffffff,
+			},
+			frameAddress:LanHeaderFrameAddress{
+				Target:0x1fffffffffffffff,
+				AckRequired:true,
+				ResRequired:true,
+				Sequence:0x1f,
+			},
+			protocolHeader:LanHeaderProtocolHeader{
+				Type:2,
+			},
+		},
+	}
+
+	if !reflect.DeepEqual(expected, m) {
+		t.Errorf("expected '%#v', got '%#v'", expected, m)
+	}
+}
+
 func TestLanDeviceMessageBuilder_GetService(t *testing.T) {
 	o := LanDeviceMessageBuilder{
 		Source:0x1fffffff,
