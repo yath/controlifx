@@ -27,8 +27,8 @@ func TestSendableLanMessage_MarshalBinary(t *testing.T) {
 			},
 		},
 		payload:&LightSetPowerLanMessage{
-			level:0xffff,
-			duration:0x1fffffff,
+			Level:0xffff,
+			Duration:0x1fffffff,
 		},
 	}
 
@@ -51,8 +51,8 @@ func TestSendableLanMessage_Payload(t *testing.T) {
 	o := SendableLanMessage{}
 
 	p := LightSetPowerLanMessage{
-		level:0xffff,
-		duration:0x1fffffff,
+		Level:0xffff,
+		Duration:0x1fffffff,
 	}
 
 	o.Payload(p)
@@ -896,7 +896,7 @@ func TestLanDeviceMessageBuilder_GetLabel(t *testing.T) {
 
 func TestSetLabelLanMessage_MarshalBinary(t *testing.T) {
 	o := SetLabelLanMessage{
-		label:"hello world",
+		Label:"hello world",
 	}
 
 	b, err := o.MarshalBinary()
@@ -923,7 +923,7 @@ func TestLanDeviceMessageBuilder_SetLabel(t *testing.T) {
 	}
 
 	p := SetLabelLanMessage{
-		label:"hello world",
+		Label:"hello world",
 	}
 
 	m := o.SetLabel(p)
@@ -965,7 +965,7 @@ func TestStateLabelLanMessage_UnmarshalBinary(t *testing.T) {
 	}
 
 	expected := StateLabelLanMessage{
-		label:"hello world",
+		Label:"hello world",
 	}
 
 	if !reflect.DeepEqual(expected, o) {
@@ -1019,9 +1019,9 @@ func TestStateVersionLanMessage_UnmarshalBinary(t *testing.T) {
 	}
 
 	expected := StateVersionLanMessage{
-		vendor:0x1fffffff,
-		product:0x2fffffff,
-		version:0x3fffffff,
+		Vendor:0x1fffffff,
+		Product:0x2fffffff,
+		Version:0x3fffffff,
 	}
 
 	if !reflect.DeepEqual(expected, o) {
@@ -1076,9 +1076,9 @@ func TestStateInfoLanMessage_UnmarshalBinary(t *testing.T) {
 	}
 
 	expected := StateInfoLanMessage{
-		time:0x1fffffffffffffff,
-		uptime:0x2fffffffffffffff,
-		downtime:0x3fffffffffffffff,
+		Time:0x1fffffffffffffff,
+		Uptime:0x2fffffffffffffff,
+		Downtime:0x3fffffffffffffff,
 	}
 
 	if !reflect.DeepEqual(expected, o) {
@@ -1135,10 +1135,10 @@ func TestStateLocationLanMessage_UnmarshalBinary(t *testing.T) {
 	}
 
 	expected := StateLocationLanMessage{
-		location:[16]byte{0x1f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+		Location:[16]byte{0x1f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 			0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
-		label:"hello world",
-		updatedAt:0x1fffffffffffffff,
+		Label:"hello world",
+		UpdatedAt:0x1fffffffffffffff,
 	}
 
 	if !reflect.DeepEqual(expected, o) {
@@ -1195,10 +1195,10 @@ func TestStateGroupLanMessage_UnmarshalBinary(t *testing.T) {
 	}
 
 	expected := StateGroupLanMessage{
-		group:[16]byte{0x1f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+		Group:[16]byte{0x1f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 			0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff},
-		label:"hello world",
-		updatedAt:0x1fffffffffffffff,
+		Label:"hello world",
+		UpdatedAt:0x1fffffffffffffff,
 	}
 
 	if !reflect.DeepEqual(expected, o) {
@@ -1208,7 +1208,7 @@ func TestStateGroupLanMessage_UnmarshalBinary(t *testing.T) {
 
 func TestEchoRequestLanMessage_MarshalBinary(t *testing.T) {
 	o := EchoRequestLanMessage{
-		payload:[64]byte{0x1f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+		Payload:[64]byte{0x1f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 			0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 			0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 			0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
@@ -1243,7 +1243,7 @@ func TestLanDeviceMessageBuilder_EchoRequest(t *testing.T) {
 	}
 
 	p := EchoRequestLanMessage{
-		payload:[64]byte{0x1f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+		Payload:[64]byte{0x1f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 			0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 			0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 			0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
@@ -1293,7 +1293,7 @@ func TestEchoResponseLanMessage_UnmarshalBinary(t *testing.T) {
 	}
 
 	expected := EchoResponseLanMessage{
-		payload:[64]byte{0x1f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+		Payload:[64]byte{0x1f, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 			0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 			0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
 			0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
@@ -1308,10 +1308,10 @@ func TestEchoResponseLanMessage_UnmarshalBinary(t *testing.T) {
 
 func TestHSBK_MarshalBinary(t *testing.T) {
 	o := HSBK{
-		hue:0x1fff,
-		saturation:0x2fff,
-		brightness:0x3fff,
-		kelvin:0x1f40,
+		Hue:0x1fff,
+		Saturation:0x2fff,
+		Brightness:0x3fff,
+		Kelvin:0x1f40,
 	}
 
 	b, err := o.MarshalBinary()
@@ -1328,10 +1328,10 @@ func TestHSBK_MarshalBinary(t *testing.T) {
 
 func TestHSBK_MarshalBinary2(t *testing.T) {
 	o := HSBK{
-		hue:0x1fff,
-		saturation:0x2fff,
-		brightness:0x3fff,
-		kelvin:2499,
+		Hue:0x1fff,
+		Saturation:0x2fff,
+		Brightness:0x3fff,
+		Kelvin:2499,
 	}
 
 	_, err := o.MarshalBinary()
@@ -1342,10 +1342,10 @@ func TestHSBK_MarshalBinary2(t *testing.T) {
 
 func TestHSBK_MarshalBinary3(t *testing.T) {
 	o := HSBK{
-		hue:0x1fff,
-		saturation:0x2fff,
-		brightness:0x3fff,
-		kelvin:9001,
+		Hue:0x1fff,
+		Saturation:0x2fff,
+		Brightness:0x3fff,
+		Kelvin:9001,
 	}
 
 	_, err := o.MarshalBinary()
@@ -1364,10 +1364,10 @@ func TestHSBK_UnmarshalBinary(t *testing.T) {
 	}
 
 	expected := HSBK{
-		hue:0x1fff,
-		saturation:0x2fff,
-		brightness:0x3fff,
-		kelvin:0x4fff,
+		Hue:0x1fff,
+		Saturation:0x2fff,
+		Brightness:0x3fff,
+		Kelvin:0x4fff,
 	}
 
 	if !reflect.DeepEqual(expected, o) {
@@ -1412,13 +1412,13 @@ func TestLanDeviceMessageBuilder_LightGet(t *testing.T) {
 
 func TestLightSetColorLanMessage_MarshalBinary(t *testing.T) {
 	o := LightSetColorLanMessage{
-		color:HSBK{
-			hue:0x1fff,
-			saturation:0x2fff,
-			brightness:0x3fff,
-			kelvin:0x1f40,
+		Color:HSBK{
+			Hue:0x1fff,
+			Saturation:0x2fff,
+			Brightness:0x3fff,
+			Kelvin:0x1f40,
 		},
-		duration:0x1fffffff,
+		Duration:0x1fffffff,
 	}
 
 	b, err := o.MarshalBinary()
@@ -1444,13 +1444,13 @@ func TestLanDeviceMessageBuilder_LightSetColor(t *testing.T) {
 	}
 
 	p := LightSetColorLanMessage{
-		color:HSBK{
-			hue:0x1fff,
-			saturation:0x2fff,
-			brightness:0x3fff,
-			kelvin:0x4fff,
+		Color:HSBK{
+			Hue:0x1fff,
+			Saturation:0x2fff,
+			Brightness:0x3fff,
+			Kelvin:0x4fff,
 		},
-		duration:0x1fffffff,
+		Duration:0x1fffffff,
 	}
 
 	m := o.LightSetColor(p)
@@ -1493,14 +1493,14 @@ func TestLightStateLanMessage_UnmarshalBinary(t *testing.T) {
 	}
 
 	expected := LightStateLanMessage{
-		color:HSBK{
-			hue:0x1fff,
-			saturation:0x2fff,
-			brightness:0x3fff,
-			kelvin:0x4fff,
+		Color:HSBK{
+			Hue:0x1fff,
+			Saturation:0x2fff,
+			Brightness:0x3fff,
+			Kelvin:0x4fff,
 		},
-		power:0x1fff,
-		label:"hello world",
+		Power:0x1fff,
+		Label:"hello world",
 	}
 
 	if !reflect.DeepEqual(expected, o) {
@@ -1545,8 +1545,8 @@ func TestLanDeviceMessageBuilder_LightGetPower(t *testing.T) {
 
 func TestLightSetPowerLanMessage_MarshalBinary(t *testing.T) {
 	o := LightSetPowerLanMessage{
-		level:0xffff,
-		duration:0x1fffffff,
+		Level:0xffff,
+		Duration:0x1fffffff,
 	}
 
 	b, err := o.MarshalBinary()
@@ -1571,8 +1571,8 @@ func TestLanDeviceMessageBuilder_LightSetPower(t *testing.T) {
 	}
 
 	p := LightSetPowerLanMessage{
-		level:0xffff,
-		duration:0x1fffffff,
+		Level:0xffff,
+		Duration:0x1fffffff,
 	}
 
 	m := o.LightSetPower(p)
@@ -1612,7 +1612,7 @@ func TestLightStatePowerLanMessage_UnmarshalBinary(t *testing.T) {
 	}
 
 	expected := LightStatePowerLanMessage{
-		level:0x1fff,
+		Level:0x1fff,
 	}
 
 	if !reflect.DeepEqual(expected, o) {

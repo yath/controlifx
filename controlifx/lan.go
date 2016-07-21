@@ -149,13 +149,13 @@ func (o LanHeaderFrame) MarshalBinary() (data []byte, _ error) {
 
 	// Tagged.
 	if o.Tagged {
-		data[2] |= 0x20
+		data[3] |= 0x20
 	}
 	// 00?0 0000  0000 0000
 
 	// Addressable (1) | Protocol (1024).
-	data[2] |= 0x18
-	// 00?1 1000  0000 0000
+	data[3] |= 0x14
+	// 0000 0000  00?1 0100
 
 	// Source.
 	binary.LittleEndian.PutUint32(data[4:], o.Source)
@@ -168,7 +168,7 @@ func (o *LanHeaderFrame) UnmarshalBinary(data []byte) error {
 	o.Size = binary.LittleEndian.Uint16(data[:2])
 
 	// Tagged.
-	o.Tagged = (data[2] >> 5) & 0x1 == 1
+	o.Tagged = (data[3] >> 5) & 0x1 == 1
 
 	// Source.
 	o.Source = binary.LittleEndian.Uint32(data[4:])
@@ -186,8 +186,18 @@ type LanHeaderFrameAddress struct {
 func (o LanHeaderFrameAddress) MarshalBinary() (data []byte, _ error) {
 	data = make([]byte, 16)
 
+	// Big endian.
+	putUint48 := func(b []byte, v uint64) {
+		b[0] = byte(v >> 40)
+		b[1] = byte(v >> 32)
+		b[2] = byte(v >> 24)
+		b[3] = byte(v >> 16)
+		b[4] = byte(v >> 8)
+		b[5] = byte(v)
+	}
+
 	// Target.
-	binary.LittleEndian.PutUint64(data[:8], o.Target)
+	putUint48(data[:6], o.Target)
 
 	// 0000 0000
 
@@ -210,7 +220,12 @@ func (o LanHeaderFrameAddress) MarshalBinary() (data []byte, _ error) {
 }
 
 func (o *LanHeaderFrameAddress) UnmarshalBinary(data []byte) error {
-	o.Target = binary.LittleEndian.Uint64(data[:8])
+	// Big endian.
+	uint48 := func(b []byte) uint64 {
+		return uint64(b[5]) | uint64(b[4])<<8 | uint64(b[3])<<16 | uint64(b[2])<<24 |
+			uint64(b[1])<<32 | uint64(b[0])<<40
+	}
+	o.Target = uint48(data[:6])
 
 	// 0000 00??
 
@@ -544,11 +559,11 @@ func (o LanDeviceMessageBuilder) GetLabel() SendableLanMessage {
 }
 
 type SetLabelLanMessage struct {
-	label label
+	Label label
 }
 
 func (o SetLabelLanMessage) MarshalBinary() ([]byte, error) {
-	return o.label.MarshalBinary()
+	return o.Label.MarshalBinary()
 }
 
 func (o LanDeviceMessageBuilder) SetLabel(payload SetLabelLanMessage) SendableLanMessage {
@@ -562,11 +577,11 @@ func (o LanDeviceMessageBuilder) SetLabel(payload SetLabelLanMessage) SendableLa
 }
 
 type StateLabelLanMessage struct {
-	label label
+	Label label
 }
 
 func (o *StateLabelLanMessage) UnmarshalBinary(data []byte) error {
-	o.label = label(bytes.TrimRight(data, "\x00"))
+	o.Label = label(bytes.TrimRight(data, "\x00"))
 
 	return nil
 }
@@ -578,20 +593,20 @@ func (o LanDeviceMessageBuilder) GetVersion() SendableLanMessage {
 }
 
 type StateVersionLanMessage struct {
-	vendor  uint32
-	product uint32
-	version uint32
+	Vendor  uint32
+	Product uint32
+	Version uint32
 }
 
 func (o *StateVersionLanMessage) UnmarshalBinary(data []byte) error {
 	// Vendor.
-	o.vendor = binary.LittleEndian.Uint32(data[:4])
+	o.Vendor = binary.LittleEndian.Uint32(data[:4])
 
 	// Product.
-	o.product = binary.LittleEndian.Uint32(data[4:8])
+	o.Product = binary.LittleEndian.Uint32(data[4:8])
 
 	// Version.
-	o.version = binary.LittleEndian.Uint32(data[8:])
+	o.Version = binary.LittleEndian.Uint32(data[8:])
 
 	return nil
 }
@@ -603,20 +618,20 @@ func (o LanDeviceMessageBuilder) GetInfo() SendableLanMessage {
 }
 
 type StateInfoLanMessage struct {
-	time     time
-	uptime   uint64
-	downtime uint64
+	Time     time
+	Uptime   uint64
+	Downtime uint64
 }
 
 func (o *StateInfoLanMessage) UnmarshalBinary(data []byte) error {
 	// Time.
-	o.time = time(binary.LittleEndian.Uint64(data[:8]))
+	o.Time = time(binary.LittleEndian.Uint64(data[:8]))
 
 	// Uptime.
-	o.uptime = binary.LittleEndian.Uint64(data[8:16])
+	o.Uptime = binary.LittleEndian.Uint64(data[8:16])
 
 	// Downtime.
-	o.downtime = binary.LittleEndian.Uint64(data[16:])
+	o.Downtime = binary.LittleEndian.Uint64(data[16:])
 
 	return nil
 }
@@ -628,20 +643,20 @@ func (o LanDeviceMessageBuilder) GetLocation() SendableLanMessage {
 }
 
 type StateLocationLanMessage struct {
-	location  [16]byte
-	label     label
-	updatedAt time
+	Location  [16]byte
+	Label     label
+	UpdatedAt time
 }
 
 func (o *StateLocationLanMessage) UnmarshalBinary(data []byte) error {
 	// Location.
-	copy(o.location[:], data[:16])
+	copy(o.Location[:], data[:16])
 
 	// Label.
-	o.label = label(bytes.TrimRight(data[16:48], "\x00"))
+	o.Label = label(bytes.TrimRight(data[16:48], "\x00"))
 
 	// Updated at.
-	o.updatedAt = time(binary.LittleEndian.Uint64(data[48:]))
+	o.UpdatedAt = time(binary.LittleEndian.Uint64(data[48:]))
 
 	return nil
 }
@@ -653,30 +668,30 @@ func (o LanDeviceMessageBuilder) GetGroup() SendableLanMessage {
 }
 
 type StateGroupLanMessage struct {
-	group     [16]byte
-	label     label
-	updatedAt time
+	Group     [16]byte
+	Label     label
+	UpdatedAt time
 }
 
 func (o *StateGroupLanMessage) UnmarshalBinary(data []byte) error {
 	// Group.
-	copy(o.group[:], data[:16])
+	copy(o.Group[:], data[:16])
 
 	// Label.
-	o.label = label(bytes.TrimRight(data[16:48], "\x00"))
+	o.Label = label(bytes.TrimRight(data[16:48], "\x00"))
 
 	// Updated at.
-	o.updatedAt = time(binary.LittleEndian.Uint64(data[48:]))
+	o.UpdatedAt = time(binary.LittleEndian.Uint64(data[48:]))
 
 	return nil
 }
 
 type EchoRequestLanMessage struct {
-	payload [64]byte
+	Payload [64]byte
 }
 
 func (o EchoRequestLanMessage) MarshalBinary() ([]byte, error) {
-	return o.payload[:], nil
+	return o.Payload[:], nil
 }
 
 func (o LanDeviceMessageBuilder) EchoRequest(payload EchoRequestLanMessage) SendableLanMessage {
@@ -690,56 +705,56 @@ func (o LanDeviceMessageBuilder) EchoRequest(payload EchoRequestLanMessage) Send
 }
 
 type EchoResponseLanMessage struct {
-	payload [64]byte
+	Payload [64]byte
 }
 
 func (o *EchoResponseLanMessage) UnmarshalBinary(data []byte) error {
-	copy(o.payload[:], data[:64])
+	copy(o.Payload[:], data[:64])
 
 	return nil
 }
 
 type HSBK struct {
-	hue        uint16
-	saturation uint16
-	brightness uint16
-	kelvin     uint16
+	Hue        uint16
+	Saturation uint16
+	Brightness uint16
+	Kelvin     uint16
 }
 
 func (o HSBK) MarshalBinary() (data []byte, err error) {
 	data = make([]byte, 8)
 
 	// Hue.
-	binary.LittleEndian.PutUint16(data[:2], o.hue)
+	binary.LittleEndian.PutUint16(data[:2], o.Hue)
 
 	// Saturation.
-	binary.LittleEndian.PutUint16(data[2:4], o.saturation)
+	binary.LittleEndian.PutUint16(data[2:4], o.Saturation)
 
 	// Brightness.
-	binary.LittleEndian.PutUint16(data[4:6], o.brightness)
+	binary.LittleEndian.PutUint16(data[4:6], o.Brightness)
 
-	if o.kelvin < 2500 || o.kelvin > 9000 {
-		return nil, fmt.Errorf("color temperature %d out of range (2500..9000)", o.kelvin)
+	if o.Kelvin < 2500 || o.Kelvin > 9000 {
+		return nil, fmt.Errorf("color temperature %d out of range (2500..9000)", o.Kelvin)
 	}
 
 	// Kelvin.
-	binary.LittleEndian.PutUint16(data[6:], o.kelvin)
+	binary.LittleEndian.PutUint16(data[6:], o.Kelvin)
 
 	return
 }
 
 func (o *HSBK) UnmarshalBinary(data []byte) error {
 	// Hue.
-	o.hue = binary.LittleEndian.Uint16(data[:2])
+	o.Hue = binary.LittleEndian.Uint16(data[:2])
 
 	// Saturation.
-	o.saturation = binary.LittleEndian.Uint16(data[2:4])
+	o.Saturation = binary.LittleEndian.Uint16(data[2:4])
 
 	// Brightness.
-	o.brightness = binary.LittleEndian.Uint16(data[4:6])
+	o.Brightness = binary.LittleEndian.Uint16(data[4:6])
 
 	// Kelvin.
-	o.kelvin = binary.LittleEndian.Uint16(data[6:])
+	o.Kelvin = binary.LittleEndian.Uint16(data[6:])
 
 	return nil
 }
@@ -751,15 +766,15 @@ func (o LanDeviceMessageBuilder) LightGet() SendableLanMessage {
 }
 
 type LightSetColorLanMessage struct {
-	color    HSBK
-	duration uint32
+	Color    HSBK
+	Duration uint32
 }
 
 func (o LightSetColorLanMessage) MarshalBinary() (data []byte, err error) {
 	data = make([]byte, 13)
 
 	// Color.
-	color, err := o.color.MarshalBinary()
+	color, err := o.Color.MarshalBinary()
 	if err != nil {
 		return
 	}
@@ -767,7 +782,7 @@ func (o LightSetColorLanMessage) MarshalBinary() (data []byte, err error) {
 	copy(data[1:9], color)
 
 	// Duration.
-	binary.LittleEndian.PutUint32(data[9:], o.duration)
+	binary.LittleEndian.PutUint32(data[9:], o.Duration)
 
 	return
 }
@@ -783,23 +798,23 @@ func (o LanDeviceMessageBuilder) LightSetColor(payload LightSetColorLanMessage) 
 }
 
 type LightStateLanMessage struct {
-	color HSBK
-	power powerLevel
-	label label
+	Color HSBK
+	Power powerLevel
+	Label label
 }
 
 func (o *LightStateLanMessage) UnmarshalBinary(data []byte) error {
 	// Color.
-	err := o.color.UnmarshalBinary(data[:8])
+	err := o.Color.UnmarshalBinary(data[:8])
 	if err != nil {
 		return err
 	}
 
 	// Power.
-	o.power = powerLevel(binary.LittleEndian.Uint16(data[8:10]))
+	o.Power = powerLevel(binary.LittleEndian.Uint16(data[8:10]))
 
 	// Label.
-	o.label = label(bytes.TrimRight(data[10:], "\x00"))
+	o.Label = label(bytes.TrimRight(data[10:], "\x00"))
 
 	return nil
 }
@@ -811,15 +826,15 @@ func (o LanDeviceMessageBuilder) LightGetPower() SendableLanMessage {
 }
 
 type LightSetPowerLanMessage struct {
-	level    powerLevel
-	duration uint32
+	Level    powerLevel
+	Duration uint32
 }
 
 func (o LightSetPowerLanMessage) MarshalBinary() (data []byte, err error) {
 	data = make([]byte, 6)
 
 	// Level.
-	level, err := o.level.MarshalBinary()
+	level, err := o.Level.MarshalBinary()
 	if err != nil {
 		return
 	}
@@ -827,7 +842,7 @@ func (o LightSetPowerLanMessage) MarshalBinary() (data []byte, err error) {
 	copy(data[:2], level)
 
 	// Duration.
-	binary.LittleEndian.PutUint32(data[2:], o.duration)
+	binary.LittleEndian.PutUint32(data[2:], o.Duration)
 
 	return
 }
@@ -844,11 +859,11 @@ func (o LanDeviceMessageBuilder) LightSetPower(payload LightSetPowerLanMessage) 
 }
 
 type LightStatePowerLanMessage struct {
-	level powerLevel
+	Level powerLevel
 }
 
 func (o *LightStatePowerLanMessage) UnmarshalBinary(data []byte) error {
-	o.level = powerLevel(binary.LittleEndian.Uint16(data))
+	o.Level = powerLevel(binary.LittleEndian.Uint16(data))
 
 	return nil
 }
