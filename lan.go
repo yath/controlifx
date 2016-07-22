@@ -6,43 +6,37 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	_time "time"
+	"time"
 	"math"
 )
 
-// The recommended maximum number of messages to be sent to any one device
-// every second over LAN.
+// The maximum recommended number of messages to be sent to any one device every
+// second.
 const MessageRate = 20
 
 // The LAN protocol header is always 36 bytes long.
 const LanHeaderSize = 36
 
 type SendableLanMessage struct {
-	header  LanHeader
-	payload encoding.BinaryMarshaler
-}
-
-func (o *SendableLanMessage) Payload(payload encoding.BinaryMarshaler) {
-	o.payload = payload
-
-	o.updateSize()
+	Header  LanHeader
+	Payload encoding.BinaryMarshaler
 }
 
 func (o *SendableLanMessage) updateSize() {
 	size := LanHeaderSize
 
-	if o.payload != nil {
-		b, _ := o.payload.MarshalBinary()
+	if o.Payload != nil {
+		b, _ := o.Payload.MarshalBinary()
 
 		size += len(b)
 	}
 
-	o.header.frame.Size = uint16(size)
+	o.Header.Frame.Size = uint16(size)
 }
 
 func (o SendableLanMessage) MarshalBinary() (data []byte, err error) {
 	// Header.
-	header, err := o.header.MarshalBinary()
+	header, err := o.Header.MarshalBinary()
 	if err != nil {
 		return
 	}
@@ -50,8 +44,8 @@ func (o SendableLanMessage) MarshalBinary() (data []byte, err error) {
 	// Payload.
 	var payload []byte
 
-	if o.payload != nil {
-		payload, err = o.payload.MarshalBinary()
+	if o.Payload != nil {
+		payload, err = o.Payload.MarshalBinary()
 		if err != nil {
 			return
 		}
@@ -63,49 +57,49 @@ func (o SendableLanMessage) MarshalBinary() (data []byte, err error) {
 }
 
 type ReceivableLanMessage struct {
-	header  LanHeader
-	payload encoding.BinaryUnmarshaler
+	Header  LanHeader
+	Payload encoding.BinaryUnmarshaler
 }
 
 func (o *ReceivableLanMessage) UnmarshalBinary(data []byte) error {
 	// Header.
-	o.header = LanHeader{}
-	if err := o.header.UnmarshalBinary(data[:LanHeaderSize]); err != nil {
+	o.Header = LanHeader{}
+	if err := o.Header.UnmarshalBinary(data[:LanHeaderSize]); err != nil {
 		return err
 	}
 
 	// Payload.
-	payload, err := NewReceivablePayloadOfType(o.header.protocolHeader.Type)
+	payload, err := NewReceivablePayloadOfType(o.Header.ProtocolHeader.Type)
 	if err != nil {
 		return err
 	}
 
-	o.payload = payload
+	o.Payload = payload
 
-	return o.payload.UnmarshalBinary(data[LanHeaderSize:])
+	return o.Payload.UnmarshalBinary(data[LanHeaderSize:])
 }
 
 type LanHeader struct {
-	frame          LanHeaderFrame
-	frameAddress   LanHeaderFrameAddress
-	protocolHeader LanHeaderProtocolHeader
+	Frame          LanHeaderFrame
+	FrameAddress   LanHeaderFrameAddress
+	ProtocolHeader LanHeaderProtocolHeader
 }
 
 func (o LanHeader) MarshalBinary() (data []byte, err error) {
 	// Frame.
-	frame, err := o.frame.MarshalBinary()
+	frame, err := o.Frame.MarshalBinary()
 	if err != nil {
 		return
 	}
 
 	// Frame address.
-	frameAddress, err := o.frameAddress.MarshalBinary()
+	frameAddress, err := o.FrameAddress.MarshalBinary()
 	if err != nil {
 		return
 	}
 
 	// Protocol header.
-	protocolHeader, err := o.protocolHeader.MarshalBinary()
+	protocolHeader, err := o.ProtocolHeader.MarshalBinary()
 	if err != nil {
 		return
 	}
@@ -117,20 +111,20 @@ func (o LanHeader) MarshalBinary() (data []byte, err error) {
 
 func (o *LanHeader) UnmarshalBinary(data []byte) error {
 	// Frame.
-	o.frame = LanHeaderFrame{}
-	if err := o.frame.UnmarshalBinary(data[:8]); err != nil {
+	o.Frame = LanHeaderFrame{}
+	if err := o.Frame.UnmarshalBinary(data[:8]); err != nil {
 		return err
 	}
 
 	// Frame address.
-	o.frameAddress = LanHeaderFrameAddress{}
-	if err := o.frameAddress.UnmarshalBinary(data[8:24]); err != nil {
+	o.FrameAddress = LanHeaderFrameAddress{}
+	if err := o.FrameAddress.UnmarshalBinary(data[8:24]); err != nil {
 		return err
 	}
 
 	// Protocol header.
-	o.protocolHeader = LanHeaderProtocolHeader{}
-	return o.protocolHeader.UnmarshalBinary(data[24:])
+	o.ProtocolHeader = LanHeaderProtocolHeader{}
+	return o.ProtocolHeader.UnmarshalBinary(data[24:])
 }
 
 type LanHeaderFrame struct {
@@ -261,9 +255,9 @@ func (o *LanHeaderProtocolHeader) UnmarshalBinary(data []byte) error {
 	return nil
 }
 
-type label string
+type Label string
 
-func (o label) MarshalBinary() (data []byte, err error) {
+func (o Label) MarshalBinary() (data []byte, err error) {
 	const Size = 32
 
 	if len(o) > Size {
@@ -276,9 +270,9 @@ func (o label) MarshalBinary() (data []byte, err error) {
 	return
 }
 
-type port uint32
+type Port uint32
 
-func (o port) MarshalBinary() (data []byte, _ error) {
+func (o Port) MarshalBinary() (data []byte, _ error) {
 	data = make([]byte, 4)
 
 	binary.LittleEndian.PutUint32(data, uint32(o))
@@ -286,9 +280,9 @@ func (o port) MarshalBinary() (data []byte, _ error) {
 	return
 }
 
-type powerLevel uint16
+type PowerLevel uint16
 
-func (o powerLevel) MarshalBinary() (data []byte, err error) {
+func (o PowerLevel) MarshalBinary() (data []byte, err error) {
 	if o != 0 && o != 65535 {
 		err = fmt.Errorf("level %d is not 0 or 65535", o)
 		return
@@ -301,18 +295,18 @@ func (o powerLevel) MarshalBinary() (data []byte, err error) {
 	return
 }
 
-type time uint64
+type Time uint64
 
-func (o time) Time() (_time.Time, error) {
+func (o Time) Time() (time.Time, error) {
 	// Check if value is over the max int64 size.
 	if o > math.MaxInt64 {
-		return _time.Time{}, fmt.Errorf("time %d exceeds int64 max value", o)
+		return time.Time{}, fmt.Errorf("time %d exceeds int64 max value", o)
 	}
 
-	return _time.Unix(0, int64(o)), nil
+	return time.Unix(0, int64(o)), nil
 }
 
-func (o time) MarshalBinary() (data []byte, _ error) {
+func (o Time) MarshalBinary() (data []byte, _ error) {
 	data = make([]byte, 8)
 
 	binary.LittleEndian.PutUint64(data, uint64(o))
@@ -331,6 +325,7 @@ func NewReceivablePayloadOfType(t uint16) (encoding.BinaryUnmarshaler, error) {
 		StateLabel        = 25
 		StateVersion      = 33
 		StateInfo         = 35
+		Acknowledgement   = 45
 		StateLocation     = 50
 		StateGroup        = 53
 		EchoResponse      = 59
@@ -357,6 +352,8 @@ func NewReceivablePayloadOfType(t uint16) (encoding.BinaryUnmarshaler, error) {
 		return &StateVersionLanMessage{}, nil
 	case StateInfo:
 		return &StateInfoLanMessage{}, nil
+	case Acknowledgement:
+		return &AcknowledgementLanMessage{}, nil
 	case StateLocation:
 		return &StateLocationLanMessage{}, nil
 	case StateGroup:
@@ -373,32 +370,32 @@ func NewReceivablePayloadOfType(t uint16) (encoding.BinaryUnmarshaler, error) {
 }
 
 type LanDeviceMessageBuilder struct {
-	Source      uint32
-	Target      uint64
+	source      uint32
+	target      uint64
 	AckRequired bool
 	ResRequired bool
 	Sequence    uint8
 }
 
 func (o LanDeviceMessageBuilder) Tagged() bool {
-	return o.Target > 0
+	return o.target > 0
 }
 
 func (o LanDeviceMessageBuilder) buildNormalMessageOfType(t uint16) SendableLanMessage {
 	return SendableLanMessage{
-		header:LanHeader{
-			frame:LanHeaderFrame{
+		Header:LanHeader{
+			Frame:LanHeaderFrame{
 				Size:LanHeaderSize,
 				Tagged:o.Tagged(),
-				Source:o.Source,
+				Source:o.source,
 			},
-			frameAddress:LanHeaderFrameAddress{
-				Target:o.Target,
+			FrameAddress:LanHeaderFrameAddress{
+				Target:o.target,
 				AckRequired:o.AckRequired,
 				ResRequired:o.ResRequired,
 				Sequence:o.Sequence,
 			},
-			protocolHeader:LanHeaderProtocolHeader{
+			ProtocolHeader:LanHeaderProtocolHeader{
 				Type:t,
 			},
 		},
@@ -525,7 +522,7 @@ func (o LanDeviceMessageBuilder) GetPower() SendableLanMessage {
 }
 
 type SetPowerLanMessage struct {
-	Level powerLevel
+	Level PowerLevel
 }
 
 func (o SetPowerLanMessage) MarshalBinary() ([]byte, error) {
@@ -537,17 +534,18 @@ func (o LanDeviceMessageBuilder) SetPower(payload SetPowerLanMessage) SendableLa
 
 	msg := o.buildNormalMessageOfType(Type)
 
-	msg.Payload(payload)
+	msg.Payload = payload
+	msg.updateSize()
 
 	return msg
 }
 
 type StatePowerLanMessage struct {
-	Level powerLevel
+	Level PowerLevel
 }
 
 func (o *StatePowerLanMessage) UnmarshalBinary(data []byte) error {
-	o.Level = powerLevel(binary.LittleEndian.Uint16(data))
+	o.Level = PowerLevel(binary.LittleEndian.Uint16(data))
 
 	return nil
 }
@@ -559,7 +557,7 @@ func (o LanDeviceMessageBuilder) GetLabel() SendableLanMessage {
 }
 
 type SetLabelLanMessage struct {
-	Label label
+	Label Label
 }
 
 func (o SetLabelLanMessage) MarshalBinary() ([]byte, error) {
@@ -571,17 +569,18 @@ func (o LanDeviceMessageBuilder) SetLabel(payload SetLabelLanMessage) SendableLa
 
 	msg := o.buildNormalMessageOfType(Type)
 
-	msg.Payload(payload)
+	msg.Payload = payload
+	msg.updateSize()
 
 	return msg
 }
 
 type StateLabelLanMessage struct {
-	Label label
+	Label Label
 }
 
 func (o *StateLabelLanMessage) UnmarshalBinary(data []byte) error {
-	o.Label = label(bytes.TrimRight(data, "\x00"))
+	o.Label = Label(bytes.TrimRight(data, "\x00"))
 
 	return nil
 }
@@ -618,14 +617,14 @@ func (o LanDeviceMessageBuilder) GetInfo() SendableLanMessage {
 }
 
 type StateInfoLanMessage struct {
-	Time     time
+	Time     Time
 	Uptime   uint64
 	Downtime uint64
 }
 
 func (o *StateInfoLanMessage) UnmarshalBinary(data []byte) error {
 	// Time.
-	o.Time = time(binary.LittleEndian.Uint64(data[:8]))
+	o.Time = Time(binary.LittleEndian.Uint64(data[:8]))
 
 	// Uptime.
 	o.Uptime = binary.LittleEndian.Uint64(data[8:16])
@@ -633,6 +632,12 @@ func (o *StateInfoLanMessage) UnmarshalBinary(data []byte) error {
 	// Downtime.
 	o.Downtime = binary.LittleEndian.Uint64(data[16:])
 
+	return nil
+}
+
+type AcknowledgementLanMessage struct{}
+
+func (o *AcknowledgementLanMessage) UnmarshalBinary(data []byte) error {
 	return nil
 }
 
@@ -644,8 +649,8 @@ func (o LanDeviceMessageBuilder) GetLocation() SendableLanMessage {
 
 type StateLocationLanMessage struct {
 	Location  [16]byte
-	Label     label
-	UpdatedAt time
+	Label     Label
+	UpdatedAt Time
 }
 
 func (o *StateLocationLanMessage) UnmarshalBinary(data []byte) error {
@@ -653,10 +658,10 @@ func (o *StateLocationLanMessage) UnmarshalBinary(data []byte) error {
 	copy(o.Location[:], data[:16])
 
 	// Label.
-	o.Label = label(bytes.TrimRight(data[16:48], "\x00"))
+	o.Label = Label(bytes.TrimRight(data[16:48], "\x00"))
 
 	// Updated at.
-	o.UpdatedAt = time(binary.LittleEndian.Uint64(data[48:]))
+	o.UpdatedAt = Time(binary.LittleEndian.Uint64(data[48:]))
 
 	return nil
 }
@@ -669,8 +674,8 @@ func (o LanDeviceMessageBuilder) GetGroup() SendableLanMessage {
 
 type StateGroupLanMessage struct {
 	Group     [16]byte
-	Label     label
-	UpdatedAt time
+	Label     Label
+	UpdatedAt Time
 }
 
 func (o *StateGroupLanMessage) UnmarshalBinary(data []byte) error {
@@ -678,10 +683,10 @@ func (o *StateGroupLanMessage) UnmarshalBinary(data []byte) error {
 	copy(o.Group[:], data[:16])
 
 	// Label.
-	o.Label = label(bytes.TrimRight(data[16:48], "\x00"))
+	o.Label = Label(bytes.TrimRight(data[16:48], "\x00"))
 
 	// Updated at.
-	o.UpdatedAt = time(binary.LittleEndian.Uint64(data[48:]))
+	o.UpdatedAt = Time(binary.LittleEndian.Uint64(data[48:]))
 
 	return nil
 }
@@ -699,7 +704,8 @@ func (o LanDeviceMessageBuilder) EchoRequest(payload EchoRequestLanMessage) Send
 
 	msg := o.buildNormalMessageOfType(Type)
 
-	msg.Payload(payload)
+	msg.Payload = payload
+	msg.updateSize()
 
 	return msg
 }
@@ -721,7 +727,7 @@ type HSBK struct {
 	Kelvin     uint16
 }
 
-func (o HSBK) MarshalBinary() (data []byte, err error) {
+func (o HSBK) MarshalBinary() (data []byte, _ error) {
 	data = make([]byte, 8)
 
 	// Hue.
@@ -792,15 +798,16 @@ func (o LanDeviceMessageBuilder) LightSetColor(payload LightSetColorLanMessage) 
 
 	msg := o.buildNormalMessageOfType(Type)
 
-	msg.Payload(payload)
+	msg.Payload = payload
+	msg.updateSize()
 
 	return msg
 }
 
 type LightStateLanMessage struct {
 	Color HSBK
-	Power powerLevel
-	Label label
+	Power PowerLevel
+	Label Label
 }
 
 func (o *LightStateLanMessage) UnmarshalBinary(data []byte) error {
@@ -811,10 +818,10 @@ func (o *LightStateLanMessage) UnmarshalBinary(data []byte) error {
 	}
 
 	// Power.
-	o.Power = powerLevel(binary.LittleEndian.Uint16(data[8:10]))
+	o.Power = PowerLevel(binary.LittleEndian.Uint16(data[8:10]))
 
 	// Label.
-	o.Label = label(bytes.TrimRight(data[10:], "\x00"))
+	o.Label = Label(bytes.TrimRight(data[10:], "\x00"))
 
 	return nil
 }
@@ -826,7 +833,7 @@ func (o LanDeviceMessageBuilder) LightGetPower() SendableLanMessage {
 }
 
 type LightSetPowerLanMessage struct {
-	Level    powerLevel
+	Level    PowerLevel
 	Duration uint32
 }
 
@@ -853,17 +860,18 @@ func (o LanDeviceMessageBuilder) LightSetPower(payload LightSetPowerLanMessage) 
 
 	msg := o.buildNormalMessageOfType(Type)
 
-	msg.Payload(payload)
+	msg.Payload = payload
+	msg.updateSize()
 
 	return msg
 }
 
 type LightStatePowerLanMessage struct {
-	Level powerLevel
+	Level PowerLevel
 }
 
 func (o *LightStatePowerLanMessage) UnmarshalBinary(data []byte) error {
-	o.Level = powerLevel(binary.LittleEndian.Uint16(data))
+	o.Level = PowerLevel(binary.LittleEndian.Uint16(data))
 
 	return nil
 }

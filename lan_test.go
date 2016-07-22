@@ -10,23 +10,23 @@ import (
 
 func TestSendableLanMessage_MarshalBinary(t *testing.T) {
 	o := SendableLanMessage{
-		header:LanHeader{
-			frame:LanHeaderFrame{
+		Header:LanHeader{
+			Frame:LanHeaderFrame{
 				Size:0x1fff,
 				Tagged:true,
 				Source:0x1fffffff,
 			},
-			frameAddress:LanHeaderFrameAddress{
+			FrameAddress:LanHeaderFrameAddress{
 				Target:0x1fffffffffff,
 				AckRequired:true,
 				ResRequired:true,
 				Sequence:0x1f,
 			},
-			protocolHeader:LanHeaderProtocolHeader{
+			ProtocolHeader:LanHeaderProtocolHeader{
 				Type:0x1fff,
 			},
 		},
-		payload:&LightSetPowerLanMessage{
+		Payload:&LightSetPowerLanMessage{
 			Level:0xffff,
 			Duration:0x1fffffff,
 		},
@@ -57,7 +57,7 @@ func TestSendableLanMessage_Payload(t *testing.T) {
 
 	o.Payload(p)
 
-	if p != o.payload {
+	if p != o.Payload {
 		t.Error("payload was not set correctly")
 	}
 }
@@ -75,23 +75,23 @@ func TestReceivableLanMessage_UnmarshalBinary(t *testing.T) {
 	}
 
 	expected := ReceivableLanMessage{
-		header:LanHeader{
-			frame:LanHeaderFrame{
+		Header:LanHeader{
+			Frame:LanHeaderFrame{
 				Size:0x1fff,
 				Tagged:true,
 				Source:0x1fffffff,
 			},
-			frameAddress:LanHeaderFrameAddress{
+			FrameAddress:LanHeaderFrameAddress{
 				Target:0x1fffffffffff,
 				AckRequired:true,
 				ResRequired:true,
 				Sequence:0x1f,
 			},
-			protocolHeader:LanHeaderProtocolHeader{
+			ProtocolHeader:LanHeaderProtocolHeader{
 				Type:3,
 			},
 		},
-		payload:&StateServiceLanMessage{
+		Payload:&StateServiceLanMessage{
 			Service:0x1f,
 			Port:0x1fffffff,
 		},
@@ -104,17 +104,17 @@ func TestReceivableLanMessage_UnmarshalBinary(t *testing.T) {
 
 func TestLanHeader_MarshalBinary(t *testing.T) {
 	o := LanHeader{
-		frame:LanHeaderFrame{
+		Frame:LanHeaderFrame{
 			Size:0x1fff,
 			Tagged:true,
 			Source:0x1fffffff},
-		frameAddress:LanHeaderFrameAddress{
+		FrameAddress:LanHeaderFrameAddress{
 			Target:0x1fffffffffff,
 			AckRequired:true,
 			ResRequired:true,
 			Sequence:0x1f,
 		},
-		protocolHeader:LanHeaderProtocolHeader{
+		ProtocolHeader:LanHeaderProtocolHeader{
 			Type:0x1fff,
 		},
 	}
@@ -292,7 +292,7 @@ func TestLanHeaderProtocolHeader_UnmarshalBinary(t *testing.T) {
 }
 
 func TestLabel_MarshalBinary(t *testing.T) {
-	o := label("hello world")
+	o := Label("hello world")
 
 	b, err := o.MarshalBinary()
 	if err != nil {
@@ -309,7 +309,7 @@ func TestLabel_MarshalBinary(t *testing.T) {
 }
 
 func TestPort_MarshalBinary(t *testing.T) {
-	o := port(0x1fffffff)
+	o := Port(0x1fffffff)
 
 	b, err := o.MarshalBinary()
 	if err != nil {
@@ -324,7 +324,7 @@ func TestPort_MarshalBinary(t *testing.T) {
 }
 
 func TestPowerLevel_MarshalBinary(t *testing.T) {
-	o := powerLevel(0xffff)
+	o := PowerLevel(0xffff)
 
 	b, err := o.MarshalBinary()
 	if err != nil {
@@ -339,7 +339,7 @@ func TestPowerLevel_MarshalBinary(t *testing.T) {
 }
 
 func TestPowerLevel_MarshalBinary2(t *testing.T) {
-	o := powerLevel(0x0)
+	o := PowerLevel(0x0)
 
 	b, err := o.MarshalBinary()
 	if err != nil {
@@ -354,7 +354,7 @@ func TestPowerLevel_MarshalBinary2(t *testing.T) {
 }
 
 func TestPowerLevel_MarshalBinary3(t *testing.T) {
-	o := powerLevel(0x1fff)
+	o := PowerLevel(0x1fff)
 
 	_, err := o.MarshalBinary()
 	if err == nil {
@@ -363,7 +363,7 @@ func TestPowerLevel_MarshalBinary3(t *testing.T) {
 }
 
 func TestTime_Time(t *testing.T) {
-	o := time(1464000000000000000)
+	o := Time(1464000000000000000)
 
 	time, err := o.Time()
 	if err != nil {
@@ -378,7 +378,7 @@ func TestTime_Time(t *testing.T) {
 }
 
 func TestTime_Time2(t *testing.T) {
-	o := time(math.MaxInt64 + 1)
+	o := Time(math.MaxInt64 + 1)
 
 	_, err := o.Time()
 	if err == nil {
@@ -388,7 +388,7 @@ func TestTime_Time2(t *testing.T) {
 
 func TestTime_MarshalBinary(t *testing.T) {
 	// 1464000000000000000
-	o := time(0x14512c3e4f2c0000)
+	o := Time(0x14512c3e4f2c0000)
 
 	b, err := o.MarshalBinary()
 	if err != nil {
@@ -422,7 +422,7 @@ func TestNewReceivablePayloadOfType2(t *testing.T) {
 
 func TestLanDeviceMessageBuilder_Tagged(t *testing.T) {
 	o := LanDeviceMessageBuilder{
-		Target:0x1,
+		sarget:0x1,
 	}
 
 	if !o.Tagged() {
@@ -440,8 +440,8 @@ func TestLanDeviceMessageBuilder_Tagged2(t *testing.T) {
 
 func TestLanDeviceMessageBuilder_buildNormalMessageOfType(t *testing.T) {
 	o := LanDeviceMessageBuilder{
-		Source:0x1fffffff,
-		Target:0x1fffffffffffffff,
+		source:0x1fffffff,
+		sarget:0x1fffffffffffffff,
 		AckRequired:true,
 		ResRequired:true,
 		Sequence:0x1f,
@@ -450,19 +450,19 @@ func TestLanDeviceMessageBuilder_buildNormalMessageOfType(t *testing.T) {
 	m := o.buildNormalMessageOfType(2)
 
 	expected := SendableLanMessage{
-		header:LanHeader{
-			frame:LanHeaderFrame{
+		Header:LanHeader{
+			Frame:LanHeaderFrame{
 				Size:LanHeaderSize,
 				Tagged:true,
 				Source:0x1fffffff,
 			},
-			frameAddress:LanHeaderFrameAddress{
+			FrameAddress:LanHeaderFrameAddress{
 				Target:0x1fffffffffffffff,
 				AckRequired:true,
 				ResRequired:true,
 				Sequence:0x1f,
 			},
-			protocolHeader:LanHeaderProtocolHeader{
+			ProtocolHeader:LanHeaderProtocolHeader{
 				Type:2,
 			},
 		},
@@ -475,8 +475,8 @@ func TestLanDeviceMessageBuilder_buildNormalMessageOfType(t *testing.T) {
 
 func TestLanDeviceMessageBuilder_GetService(t *testing.T) {
 	o := LanDeviceMessageBuilder{
-		Source:0x1fffffff,
-		Target:0x1fffffffffffffff,
+		source:0x1fffffff,
+		sarget:0x1fffffffffffffff,
 		AckRequired:true,
 		ResRequired:true,
 		Sequence:0x1f,
@@ -485,19 +485,19 @@ func TestLanDeviceMessageBuilder_GetService(t *testing.T) {
 	m := o.GetService()
 
 	expected := SendableLanMessage{
-		header:LanHeader{
-			frame:LanHeaderFrame{
+		Header:LanHeader{
+			Frame:LanHeaderFrame{
 				Size:LanHeaderSize,
 				Tagged:true,
 				Source:0x1fffffff,
 			},
-			frameAddress:LanHeaderFrameAddress{
+			FrameAddress:LanHeaderFrameAddress{
 				Target:0x1fffffffffffffff,
 				AckRequired:true,
 				ResRequired:true,
 				Sequence:0x1f,
 			},
-			protocolHeader:LanHeaderProtocolHeader{
+			ProtocolHeader:LanHeaderProtocolHeader{
 				Type:2,
 			},
 		},
@@ -529,8 +529,8 @@ func TestStateServiceLanMessage_UnmarshalBinary(t *testing.T) {
 
 func TestLanDeviceMessageBuilder_GetHostInfo(t *testing.T) {
 	o := LanDeviceMessageBuilder{
-		Source:0x1fffffff,
-		Target:0x1fffffffffffffff,
+		source:0x1fffffff,
+		sarget:0x1fffffffffffffff,
 		AckRequired:true,
 		ResRequired:true,
 		Sequence:0x1f,
@@ -539,19 +539,19 @@ func TestLanDeviceMessageBuilder_GetHostInfo(t *testing.T) {
 	m := o.GetHostInfo()
 
 	expected := SendableLanMessage{
-		header:LanHeader{
-			frame:LanHeaderFrame{
+		Header:LanHeader{
+			Frame:LanHeaderFrame{
 				Size:LanHeaderSize,
 				Tagged:true,
 				Source:0x1fffffff,
 			},
-			frameAddress:LanHeaderFrameAddress{
+			FrameAddress:LanHeaderFrameAddress{
 				Target:0x1fffffffffffffff,
 				AckRequired:true,
 				ResRequired:true,
 				Sequence:0x1f,
 			},
-			protocolHeader:LanHeaderProtocolHeader{
+			ProtocolHeader:LanHeaderProtocolHeader{
 				Type:12,
 			},
 		},
@@ -585,8 +585,8 @@ func TestStateHostInfoLanMessage_UnmarshalBinary(t *testing.T) {
 
 func TestLanDeviceMessageBuilder_GetHostFirmware(t *testing.T) {
 	o := LanDeviceMessageBuilder{
-		Source:0x1fffffff,
-		Target:0x1fffffffffffffff,
+		source:0x1fffffff,
+		sarget:0x1fffffffffffffff,
 		AckRequired:true,
 		ResRequired:true,
 		Sequence:0x1f,
@@ -595,19 +595,19 @@ func TestLanDeviceMessageBuilder_GetHostFirmware(t *testing.T) {
 	m := o.GetHostFirmware()
 
 	expected := SendableLanMessage{
-		header:LanHeader{
-			frame:LanHeaderFrame{
+		Header:LanHeader{
+			Frame:LanHeaderFrame{
 				Size:LanHeaderSize,
 				Tagged:true,
 				Source:0x1fffffff,
 			},
-			frameAddress:LanHeaderFrameAddress{
+			FrameAddress:LanHeaderFrameAddress{
 				Target:0x1fffffffffffffff,
 				AckRequired:true,
 				ResRequired:true,
 				Sequence:0x1f,
 			},
-			protocolHeader:LanHeaderProtocolHeader{
+			ProtocolHeader:LanHeaderProtocolHeader{
 				Type:14,
 			},
 		},
@@ -640,8 +640,8 @@ func TestStateHostFirmwareLanMessage_UnmarshalBinary(t *testing.T) {
 
 func TestLanDeviceMessageBuilder_GetWifiInfo(t *testing.T) {
 	o := LanDeviceMessageBuilder{
-		Source:0x1fffffff,
-		Target:0x1fffffffffffffff,
+		source:0x1fffffff,
+		sarget:0x1fffffffffffffff,
 		AckRequired:true,
 		ResRequired:true,
 		Sequence:0x1f,
@@ -650,19 +650,19 @@ func TestLanDeviceMessageBuilder_GetWifiInfo(t *testing.T) {
 	m := o.GetWifiInfo()
 
 	expected := SendableLanMessage{
-		header:LanHeader{
-			frame:LanHeaderFrame{
+		Header:LanHeader{
+			Frame:LanHeaderFrame{
 				Size:LanHeaderSize,
 				Tagged:true,
 				Source:0x1fffffff,
 			},
-			frameAddress:LanHeaderFrameAddress{
+			FrameAddress:LanHeaderFrameAddress{
 				Target:0x1fffffffffffffff,
 				AckRequired:true,
 				ResRequired:true,
 				Sequence:0x1f,
 			},
-			protocolHeader:LanHeaderProtocolHeader{
+			ProtocolHeader:LanHeaderProtocolHeader{
 				Type:16,
 			},
 		},
@@ -696,8 +696,8 @@ func TestStateWifiInfoLanMessage_UnmarshalBinary(t *testing.T) {
 
 func TestLanDeviceMessageBuilder_GetWifiFirmware(t *testing.T) {
 	o := LanDeviceMessageBuilder{
-		Source:0x1fffffff,
-		Target:0x1fffffffffffffff,
+		source:0x1fffffff,
+		sarget:0x1fffffffffffffff,
 		AckRequired:true,
 		ResRequired:true,
 		Sequence:0x1f,
@@ -706,19 +706,19 @@ func TestLanDeviceMessageBuilder_GetWifiFirmware(t *testing.T) {
 	m := o.GetWifiFirmware()
 
 	expected := SendableLanMessage{
-		header:LanHeader{
-			frame:LanHeaderFrame{
+		Header:LanHeader{
+			Frame:LanHeaderFrame{
 				Size:LanHeaderSize,
 				Tagged:true,
 				Source:0x1fffffff,
 			},
-			frameAddress:LanHeaderFrameAddress{
+			FrameAddress:LanHeaderFrameAddress{
 				Target:0x1fffffffffffffff,
 				AckRequired:true,
 				ResRequired:true,
 				Sequence:0x1f,
 			},
-			protocolHeader:LanHeaderProtocolHeader{
+			ProtocolHeader:LanHeaderProtocolHeader{
 				Type:18,
 			},
 		},
@@ -751,8 +751,8 @@ func TestStateWifiFirmwareLanMessage_UnmarshalBinary(t *testing.T) {
 
 func TestLanDeviceMessageBuilder_GetPower(t *testing.T) {
 	o := LanDeviceMessageBuilder{
-		Source:0x1fffffff,
-		Target:0x1fffffffffffffff,
+		source:0x1fffffff,
+		sarget:0x1fffffffffffffff,
 		AckRequired:true,
 		ResRequired:true,
 		Sequence:0x1f,
@@ -761,19 +761,19 @@ func TestLanDeviceMessageBuilder_GetPower(t *testing.T) {
 	m := o.GetPower()
 
 	expected := SendableLanMessage{
-		header:LanHeader{
-			frame:LanHeaderFrame{
+		Header:LanHeader{
+			Frame:LanHeaderFrame{
 				Size:LanHeaderSize,
 				Tagged:true,
 				Source:0x1fffffff,
 			},
-			frameAddress:LanHeaderFrameAddress{
+			FrameAddress:LanHeaderFrameAddress{
 				Target:0x1fffffffffffffff,
 				AckRequired:true,
 				ResRequired:true,
 				Sequence:0x1f,
 			},
-			protocolHeader:LanHeaderProtocolHeader{
+			ProtocolHeader:LanHeaderProtocolHeader{
 				Type:20,
 			},
 		},
@@ -803,8 +803,8 @@ func TestSetPowerLanMessage_MarshalBinary(t *testing.T) {
 
 func TestLanDeviceMessageBuilder_SetPower(t *testing.T) {
 	o := LanDeviceMessageBuilder{
-		Source:0x1fffffff,
-		Target:0x1fffffffffffffff,
+		source:0x1fffffff,
+		sarget:0x1fffffffffffffff,
 		AckRequired:true,
 		ResRequired:true,
 		Sequence:0x1f,
@@ -817,23 +817,23 @@ func TestLanDeviceMessageBuilder_SetPower(t *testing.T) {
 	m := o.SetPower(p)
 
 	expected := SendableLanMessage{
-		header:LanHeader{
-			frame:LanHeaderFrame{
+		Header:LanHeader{
+			Frame:LanHeaderFrame{
 				Size:LanHeaderSize + 2,
 				Tagged:true,
 				Source:0x1fffffff,
 			},
-			frameAddress:LanHeaderFrameAddress{
+			FrameAddress:LanHeaderFrameAddress{
 				Target:0x1fffffffffffffff,
 				AckRequired:true,
 				ResRequired:true,
 				Sequence:0x1f,
 			},
-			protocolHeader:LanHeaderProtocolHeader{
+			ProtocolHeader:LanHeaderProtocolHeader{
 				Type:21,
 			},
 		},
-		payload:p,
+		Payload:p,
 	}
 
 	if !reflect.DeepEqual(expected, m) {
@@ -861,8 +861,8 @@ func TestStatePowerLanMessage_UnmarshalBinary(t *testing.T) {
 
 func TestLanDeviceMessageBuilder_GetLabel(t *testing.T) {
 	o := LanDeviceMessageBuilder{
-		Source:0x1fffffff,
-		Target:0x1fffffffffffffff,
+		source:0x1fffffff,
+		sarget:0x1fffffffffffffff,
 		AckRequired:true,
 		ResRequired:true,
 		Sequence:0x1f,
@@ -871,19 +871,19 @@ func TestLanDeviceMessageBuilder_GetLabel(t *testing.T) {
 	m := o.GetLabel()
 
 	expected := SendableLanMessage{
-		header:LanHeader{
-			frame:LanHeaderFrame{
+		Header:LanHeader{
+			Frame:LanHeaderFrame{
 				Size:LanHeaderSize,
 				Tagged:true,
 				Source:0x1fffffff,
 			},
-			frameAddress:LanHeaderFrameAddress{
+			FrameAddress:LanHeaderFrameAddress{
 				Target:0x1fffffffffffffff,
 				AckRequired:true,
 				ResRequired:true,
 				Sequence:0x1f,
 			},
-			protocolHeader:LanHeaderProtocolHeader{
+			ProtocolHeader:LanHeaderProtocolHeader{
 				Type:23,
 			},
 		},
@@ -915,8 +915,8 @@ func TestSetLabelLanMessage_MarshalBinary(t *testing.T) {
 
 func TestLanDeviceMessageBuilder_SetLabel(t *testing.T) {
 	o := LanDeviceMessageBuilder{
-		Source:0x1fffffff,
-		Target:0x1fffffffffffffff,
+		source:0x1fffffff,
+		sarget:0x1fffffffffffffff,
 		AckRequired:true,
 		ResRequired:true,
 		Sequence:0x1f,
@@ -929,23 +929,23 @@ func TestLanDeviceMessageBuilder_SetLabel(t *testing.T) {
 	m := o.SetLabel(p)
 
 	expected := SendableLanMessage{
-		header:LanHeader{
-			frame:LanHeaderFrame{
+		Header:LanHeader{
+			Frame:LanHeaderFrame{
 				Size:LanHeaderSize + 32,
 				Tagged:true,
 				Source:0x1fffffff,
 			},
-			frameAddress:LanHeaderFrameAddress{
+			FrameAddress:LanHeaderFrameAddress{
 				Target:0x1fffffffffffffff,
 				AckRequired:true,
 				ResRequired:true,
 				Sequence:0x1f,
 			},
-			protocolHeader:LanHeaderProtocolHeader{
+			ProtocolHeader:LanHeaderProtocolHeader{
 				Type:24,
 			},
 		},
-		payload:p,
+		Payload:p,
 	}
 
 	if !reflect.DeepEqual(expected, m) {
@@ -975,8 +975,8 @@ func TestStateLabelLanMessage_UnmarshalBinary(t *testing.T) {
 
 func TestLanDeviceMessageBuilder_GetVersion(t *testing.T) {
 	o := LanDeviceMessageBuilder{
-		Source:0x1fffffff,
-		Target:0x1fffffffffffffff,
+		source:0x1fffffff,
+		sarget:0x1fffffffffffffff,
 		AckRequired:true,
 		ResRequired:true,
 		Sequence:0x1f,
@@ -985,19 +985,19 @@ func TestLanDeviceMessageBuilder_GetVersion(t *testing.T) {
 	m := o.GetVersion()
 
 	expected := SendableLanMessage{
-		header:LanHeader{
-			frame:LanHeaderFrame{
+		Header:LanHeader{
+			Frame:LanHeaderFrame{
 				Size:LanHeaderSize,
 				Tagged:true,
 				Source:0x1fffffff,
 			},
-			frameAddress:LanHeaderFrameAddress{
+			FrameAddress:LanHeaderFrameAddress{
 				Target:0x1fffffffffffffff,
 				AckRequired:true,
 				ResRequired:true,
 				Sequence:0x1f,
 			},
-			protocolHeader:LanHeaderProtocolHeader{
+			ProtocolHeader:LanHeaderProtocolHeader{
 				Type:32,
 			},
 		},
@@ -1031,8 +1031,8 @@ func TestStateVersionLanMessage_UnmarshalBinary(t *testing.T) {
 
 func TestLanDeviceMessageBuilder_GetInfo(t *testing.T) {
 	o := LanDeviceMessageBuilder{
-		Source:0x1fffffff,
-		Target:0x1fffffffffffffff,
+		source:0x1fffffff,
+		sarget:0x1fffffffffffffff,
 		AckRequired:true,
 		ResRequired:true,
 		Sequence:0x1f,
@@ -1041,19 +1041,19 @@ func TestLanDeviceMessageBuilder_GetInfo(t *testing.T) {
 	m := o.GetInfo()
 
 	expected := SendableLanMessage{
-		header:LanHeader{
-			frame:LanHeaderFrame{
+		Header:LanHeader{
+			Frame:LanHeaderFrame{
 				Size:LanHeaderSize,
 				Tagged:true,
 				Source:0x1fffffff,
 			},
-			frameAddress:LanHeaderFrameAddress{
+			FrameAddress:LanHeaderFrameAddress{
 				Target:0x1fffffffffffffff,
 				AckRequired:true,
 				ResRequired:true,
 				Sequence:0x1f,
 			},
-			protocolHeader:LanHeaderProtocolHeader{
+			ProtocolHeader:LanHeaderProtocolHeader{
 				Type:34,
 			},
 		},
@@ -1088,8 +1088,8 @@ func TestStateInfoLanMessage_UnmarshalBinary(t *testing.T) {
 
 func TestLanDeviceMessageBuilder_GetLocation(t *testing.T) {
 	o := LanDeviceMessageBuilder{
-		Source:0x1fffffff,
-		Target:0x1fffffffffffffff,
+		source:0x1fffffff,
+		sarget:0x1fffffffffffffff,
 		AckRequired:true,
 		ResRequired:true,
 		Sequence:0x1f,
@@ -1098,19 +1098,19 @@ func TestLanDeviceMessageBuilder_GetLocation(t *testing.T) {
 	m := o.GetLocation()
 
 	expected := SendableLanMessage{
-		header:LanHeader{
-			frame:LanHeaderFrame{
+		Header:LanHeader{
+			Frame:LanHeaderFrame{
 				Size:LanHeaderSize,
 				Tagged:true,
 				Source:0x1fffffff,
 			},
-			frameAddress:LanHeaderFrameAddress{
+			FrameAddress:LanHeaderFrameAddress{
 				Target:0x1fffffffffffffff,
 				AckRequired:true,
 				ResRequired:true,
 				Sequence:0x1f,
 			},
-			protocolHeader:LanHeaderProtocolHeader{
+			ProtocolHeader:LanHeaderProtocolHeader{
 				Type:48,
 			},
 		},
@@ -1148,8 +1148,8 @@ func TestStateLocationLanMessage_UnmarshalBinary(t *testing.T) {
 
 func TestLanDeviceMessageBuilder_GetGroup(t *testing.T) {
 	o := LanDeviceMessageBuilder{
-		Source:0x1fffffff,
-		Target:0x1fffffffffffffff,
+		source:0x1fffffff,
+		sarget:0x1fffffffffffffff,
 		AckRequired:true,
 		ResRequired:true,
 		Sequence:0x1f,
@@ -1158,19 +1158,19 @@ func TestLanDeviceMessageBuilder_GetGroup(t *testing.T) {
 	m := o.GetGroup()
 
 	expected := SendableLanMessage{
-		header:LanHeader{
-			frame:LanHeaderFrame{
+		Header:LanHeader{
+			Frame:LanHeaderFrame{
 				Size:LanHeaderSize,
 				Tagged:true,
 				Source:0x1fffffff,
 			},
-			frameAddress:LanHeaderFrameAddress{
+			FrameAddress:LanHeaderFrameAddress{
 				Target:0x1fffffffffffffff,
 				AckRequired:true,
 				ResRequired:true,
 				Sequence:0x1f,
 			},
-			protocolHeader:LanHeaderProtocolHeader{
+			ProtocolHeader:LanHeaderProtocolHeader{
 				Type:51,
 			},
 		},
@@ -1235,8 +1235,8 @@ func TestEchoRequestLanMessage_MarshalBinary(t *testing.T) {
 
 func TestLanDeviceMessageBuilder_EchoRequest(t *testing.T) {
 	o := LanDeviceMessageBuilder{
-		Source:0x1fffffff,
-		Target:0x1fffffffffffffff,
+		source:0x1fffffff,
+		sarget:0x1fffffffffffffff,
 		AckRequired:true,
 		ResRequired:true,
 		Sequence:0x1f,
@@ -1254,23 +1254,23 @@ func TestLanDeviceMessageBuilder_EchoRequest(t *testing.T) {
 	m := o.EchoRequest(p)
 
 	expected := SendableLanMessage{
-		header:LanHeader{
-			frame:LanHeaderFrame{
+		Header:LanHeader{
+			Frame:LanHeaderFrame{
 				Size:LanHeaderSize + 64,
 				Tagged:true,
 				Source:0x1fffffff,
 			},
-			frameAddress:LanHeaderFrameAddress{
+			FrameAddress:LanHeaderFrameAddress{
 				Target:0x1fffffffffffffff,
 				AckRequired:true,
 				ResRequired:true,
 				Sequence:0x1f,
 			},
-			protocolHeader:LanHeaderProtocolHeader{
+			ProtocolHeader:LanHeaderProtocolHeader{
 				Type:58,
 			},
 		},
-		payload:p,
+		Payload:p,
 	}
 
 	if !reflect.DeepEqual(expected, m) {
@@ -1377,8 +1377,8 @@ func TestHSBK_UnmarshalBinary(t *testing.T) {
 
 func TestLanDeviceMessageBuilder_LightGet(t *testing.T) {
 	o := LanDeviceMessageBuilder{
-		Source:0x1fffffff,
-		Target:0x1fffffffffffffff,
+		source:0x1fffffff,
+		sarget:0x1fffffffffffffff,
 		AckRequired:true,
 		ResRequired:true,
 		Sequence:0x1f,
@@ -1387,19 +1387,19 @@ func TestLanDeviceMessageBuilder_LightGet(t *testing.T) {
 	m := o.LightGet()
 
 	expected := SendableLanMessage{
-		header:LanHeader{
-			frame:LanHeaderFrame{
+		Header:LanHeader{
+			Frame:LanHeaderFrame{
 				Size:LanHeaderSize,
 				Tagged:true,
 				Source:0x1fffffff,
 			},
-			frameAddress:LanHeaderFrameAddress{
+			FrameAddress:LanHeaderFrameAddress{
 				Target:0x1fffffffffffffff,
 				AckRequired:true,
 				ResRequired:true,
 				Sequence:0x1f,
 			},
-			protocolHeader:LanHeaderProtocolHeader{
+			ProtocolHeader:LanHeaderProtocolHeader{
 				Type:101,
 			},
 		},
@@ -1436,8 +1436,8 @@ func TestLightSetColorLanMessage_MarshalBinary(t *testing.T) {
 
 func TestLanDeviceMessageBuilder_LightSetColor(t *testing.T) {
 	o := LanDeviceMessageBuilder{
-		Source:0x1fffffff,
-		Target:0x1fffffffffffffff,
+		source:0x1fffffff,
+		sarget:0x1fffffffffffffff,
 		AckRequired:true,
 		ResRequired:true,
 		Sequence:0x1f,
@@ -1456,23 +1456,23 @@ func TestLanDeviceMessageBuilder_LightSetColor(t *testing.T) {
 	m := o.LightSetColor(p)
 
 	expected := SendableLanMessage{
-		header:LanHeader{
-			frame:LanHeaderFrame{
+		Header:LanHeader{
+			Frame:LanHeaderFrame{
 				Size:LanHeaderSize + 13,
 				Tagged:true,
 				Source:0x1fffffff,
 			},
-			frameAddress:LanHeaderFrameAddress{
+			FrameAddress:LanHeaderFrameAddress{
 				Target:0x1fffffffffffffff,
 				AckRequired:true,
 				ResRequired:true,
 				Sequence:0x1f,
 			},
-			protocolHeader:LanHeaderProtocolHeader{
+			ProtocolHeader:LanHeaderProtocolHeader{
 				Type:102,
 			},
 		},
-		payload:p,
+		Payload:p,
 	}
 
 	if !reflect.DeepEqual(expected, m) {
@@ -1510,8 +1510,8 @@ func TestLightStateLanMessage_UnmarshalBinary(t *testing.T) {
 
 func TestLanDeviceMessageBuilder_LightGetPower(t *testing.T) {
 	o := LanDeviceMessageBuilder{
-		Source:0x1fffffff,
-		Target:0x1fffffffffffffff,
+		source:0x1fffffff,
+		sarget:0x1fffffffffffffff,
 		AckRequired:true,
 		ResRequired:true,
 		Sequence:0x1f,
@@ -1520,19 +1520,19 @@ func TestLanDeviceMessageBuilder_LightGetPower(t *testing.T) {
 	m := o.LightGetPower()
 
 	expected := SendableLanMessage{
-		header:LanHeader{
-			frame:LanHeaderFrame{
+		Header:LanHeader{
+			Frame:LanHeaderFrame{
 				Size:LanHeaderSize,
 				Tagged:true,
 				Source:0x1fffffff,
 			},
-			frameAddress:LanHeaderFrameAddress{
+			FrameAddress:LanHeaderFrameAddress{
 				Target:0x1fffffffffffffff,
 				AckRequired:true,
 				ResRequired:true,
 				Sequence:0x1f,
 			},
-			protocolHeader:LanHeaderProtocolHeader{
+			ProtocolHeader:LanHeaderProtocolHeader{
 				Type:116,
 			},
 		},
@@ -1563,8 +1563,8 @@ func TestLightSetPowerLanMessage_MarshalBinary(t *testing.T) {
 
 func TestLanDeviceMessageBuilder_LightSetPower(t *testing.T) {
 	o := LanDeviceMessageBuilder{
-		Source:0x1fffffff,
-		Target:0x1fffffffffffffff,
+		source:0x1fffffff,
+		sarget:0x1fffffffffffffff,
 		AckRequired:true,
 		ResRequired:true,
 		Sequence:0x1f,
@@ -1578,23 +1578,23 @@ func TestLanDeviceMessageBuilder_LightSetPower(t *testing.T) {
 	m := o.LightSetPower(p)
 
 	expected := SendableLanMessage{
-		header:LanHeader{
-			frame:LanHeaderFrame{
+		Header:LanHeader{
+			Frame:LanHeaderFrame{
 				Size:LanHeaderSize + 6,
 				Tagged:true,
 				Source:0x1fffffff,
 			},
-			frameAddress:LanHeaderFrameAddress{
+			FrameAddress:LanHeaderFrameAddress{
 				Target:0x1fffffffffffffff,
 				AckRequired:true,
 				ResRequired:true,
 				Sequence:0x1f,
 			},
-			protocolHeader:LanHeaderProtocolHeader{
+			ProtocolHeader:LanHeaderProtocolHeader{
 				Type:117,
 			},
 		},
-		payload:p,
+		Payload:p,
 	}
 
 	if !reflect.DeepEqual(expected, m) {

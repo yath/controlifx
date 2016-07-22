@@ -1,61 +1,34 @@
 package controlifx
 
 import (
-	"net"
-	_time "time"
-	"math/rand"
 	"encoding/binary"
-	"github.com/siddontang/go/log"
+	"math/rand"
+	"net"
+	"time"
+	"errors"
 )
 
-const MaxReadSize = LanHeaderSize + 64
+const maxReadSize = LanHeaderSize+64
 
-type Device struct {
+type Filter func(ReceivableLanMessage) bool
+
+type device struct {
 	addr *net.UDPAddr
-	mac uint64
+	mac  uint64
 }
 
 type Connector struct {
-	ins []chan receivablePacket
-	out chan<- sendablePacket
+	bcastAddr *net.UDPAddr
+	conn      *net.UDPConn
 
-	Devices []Device
+	Devices []device
 }
 
-type receivablePacket struct {
-	ReceivableLanMessage
-
-	Device Device
-}
-
-type sendablePacket struct {
-	SendableLanMessage
-
-	device *Device
-}
-
-func (o *Connector) getIn() (int, <-chan receivablePacket) {
-	for i, v := range o.ins {
-		if v == nil {
-			o.ins[i] = make(chan receivablePacket)
-			return i, o.ins[i]
-		}
+func (o *Connector) connect() error {
+	if o.conn != nil {
+		return nil
 	}
 
-	i := len(o.ins)
-	o.ins = append(o.ins, make(chan receivablePacket))
-	return i, o.ins[i]
-}
-
-func (o *Connector) doneWithIn(i int) {
-	if i == len(o.ins)-1 {
-		o.ins = o.ins[:i]
-	} else {
-		o.ins[i] = nil
-	}
-}
-
-func (o *Connector) Connect() error {
 	const PortStr = "56700"
 
 	laddr, err := net.ResolveUDPAddr("udp", net.JoinHostPort(net.IPv4zero.String(), PortStr))
@@ -63,180 +36,209 @@ func (o *Connector) Connect() error {
 		return err
 	}
 
-	conn, err := net.ListenUDP("udp", laddr)
+	if o.bcastAddr, err = net.ResolveUDPAddr("udp", net.JoinHostPort(net.IPv4bcast.String(), PortStr)); err != nil {
+		return err
+	}
 
-	out := make(chan sendablePacket)
-	o.out = out
+	o.conn, err = net.ListenUDP("udp", laddr)
+	return err
+}
 
-	bcastAddr, err := net.ResolveUDPAddr("udp", net.JoinHostPort(net.IPv4bcast.String(), PortStr))
+func (o *Connector) send(addr *net.UDPAddr, msg SendableLanMessage) error {
+	if err := o.connect(); err != nil {
+		return err
+	}
+
+	if addr == nil {
+		addr = o.bcastAddr
+	}
+
+	b, err := msg.MarshalBinary()
 	if err != nil {
 		return err
 	}
 
-	// In.
-	go func() {
-		for {
-			b := make([]byte, MaxReadSize)
-			n, addr, err := conn.ReadFromUDP(b)
-			if err != nil {
-				log.Error(err)
-				continue
-			}
-			b = b[:n]
-
-			msg := ReceivableLanMessage{}
-			err = msg.UnmarshalBinary(b)
-			if err != nil {
-				continue
-			}
-
-			for _, v := range o.ins {
-				if v != nil {
-					v <- receivablePacket{
-						msg,
-						Device{
-							addr:addr,
-							mac:msg.header.frameAddress.Target,
-						},
-					}
-				}
-			}
-		}
-	}()
-
-	// Out.
-	go func() {
-		for {
-			packet := <-out
-
-			b, err := packet.MarshalBinary()
-			if err != nil {
-				log.Error(err)
-				continue
-			}
-
-			var dest *net.UDPAddr
-
-			if packet.device == nil {
-				dest = bcastAddr
-			} else {
-				dest = packet.device.addr
-				packet.header.frameAddress.Target = packet.device.mac
-			}
-
-			if err != nil {
-				log.Error(err)
-				continue
-			}
-
-			_, err = conn.WriteTo(b, dest)
-			if err != nil {
-				log.Error(err)
-			}
-		}
-
-		close(out)
-	}()
-
+	_, err = o.conn.WriteTo(b, addr)
 	return err
 }
 
-func (o *Connector) FindAllDevices() error {
-	const DiscoveryTimeout = 2
-
-	source := RandomSource()
-
-	msg := LanDeviceMessageBuilder{
-		Source:source,
-	}.GetService()
-	msg.header.frame.Tagged = true
-
-	o.out <- sendablePacket{msg, nil}
-	inIndex, in := o.getIn()
-
-	timeout := _time.NewTimer(DiscoveryTimeout * 1e9)
-
-	RECEIVE_LOOP:
-	for {
-		select {
-		case <-timeout.C:
-			break RECEIVE_LOOP
-		case msg := <-in:
-			if serviceMsg, ok := msg.payload.(*StateServiceLanMessage); ok && msg.header.frame.Source == source && serviceMsg.Service == 1 {
-				o.Devices = append(o.Devices, msg.Device)
-			}
-		}
+func (o *Connector) bcastGetService() (uint32, error) {
+	source, err := randomSource()
+	if err != nil {
+		return source, err
 	}
 
-	log.Debugf("Registered %d devices\n", len(o.Devices))
+	msg := LanDeviceMessageBuilder{source:source}.GetService()
+	msg.Header.Frame.Tagged = true
+	return source, o.send(nil, msg)
+}
 
-	o.doneWithIn(inIndex)
+func (o *Connector) readMsg(filter Filter) (msg ReceivableLanMessage, raddr *net.UDPAddr, err error) {
+	for {
+		b := make([]byte, maxReadSize)
+		var n int
+		n, raddr, err = o.conn.ReadFromUDP(b)
+		if err != nil {
+			return
+		}
+		b = b[:n]
+
+		msg = ReceivableLanMessage{}
+		err = msg.UnmarshalBinary(b)
+		if err == nil && filter(msg) {
+			break
+		}
+	}
+	return
+}
+
+func (o *Connector) DiscoverNDevices(n int) error {
+	source, err := o.bcastGetService()
+	if err != nil {
+		return err
+	}
+
+	for n > 0 {
+		msg, raddr, err := o.readMsg(func(msg ReceivableLanMessage) bool {
+			payload, ok := msg.Payload.(*StateServiceLanMessage)
+			return msg.Header.Frame.Source == source && ok && payload.Service == 1
+		})
+		if err != nil {
+			return err
+		}
+		o.Devices = append(o.Devices, device{
+			addr: raddr,
+			mac: msg.Header.FrameAddress.Target,
+		})
+		n--
+	}
 	return nil
 }
 
-type Filter func(ReceivableLanMessage) bool
+func (o *Connector) DiscoverAllDevices(timeout int) error {
+	source, err := o.bcastGetService()
+	if err != nil {
+		return err
+	}
 
-func (o *Connector) SendMessageToAll(msg SendableLanMessage) {
-	o.out <- sendablePacket{msg, nil}
-}
+	if err := o.conn.SetDeadline(time.Now().Add(time.Duration(timeout)*time.Millisecond)); err != nil {
+		return err
+	}
 
-func (o *Connector) SendMessageTo(device *Device, msg SendableLanMessage) {
-	o.out <- sendablePacket{msg, device}
-}
-
-func (o *Connector) GetResponseFromAll(msg SendableLanMessage, filter Filter) <-chan receivablePacket {
-	inIndex, in := o.getIn()
-
-	o.SendMessageToAll(msg)
-
-	ch := make(chan receivablePacket)
-
-	go func() {
-		var good int
-
-		for good < len(o.Devices) {
-			msg := <-in
-			if filter(msg.ReceivableLanMessage) {
-				ch <- msg
-				good++
-			}
-		}
-
-		close(ch)
-		o.doneWithIn(inIndex)
-	}()
-
-	return ch
-}
-
-func (o *Connector) GetResponseFrom(device *Device, msg SendableLanMessage, filter Filter) <-chan receivablePacket {
-	inIndex, in := o.getIn()
-
-	o.SendMessageTo(device, msg)
-
-	ch := make(chan receivablePacket)
-
-	go func() {
-		for {
-			msg := <-in
-			if filter(msg.ReceivableLanMessage) {
-				ch <- msg
+	for {
+		msg, raddr, err := o.readMsg(func(msg ReceivableLanMessage) bool {
+			payload, ok := msg.Payload.(*StateServiceLanMessage)
+			return msg.Header.Frame.Source == source && ok && payload.Service == 1
+		})
+		if err != nil {
+			if err.(net.Error).Timeout() {
 				break
 			}
+			return err
 		}
+		o.Devices = append(o.Devices, device{
+			addr: raddr,
+			mac: msg.Header.FrameAddress.Target,
+		})
+	}
 
-		close(ch)
-		o.doneWithIn(inIndex)
-	}()
-
-	return ch
+	// Remove read deadline.
+	return o.conn.SetDeadline(time.Time{})
 }
 
-func RandomSource() uint32 {
+func (o Connector) SendTo(device device, msg SendableLanMessage) error {
+	msg.Header.FrameAddress.Target = device.mac
+	return o.send(device.addr, msg)
+}
+
+func (o Connector) SendToAll(msg SendableLanMessage) error {
+	msg.Header.FrameAddress.Target = 0
+	return o.send(nil, msg)
+}
+
+func (o Connector) GetResponseFrom(device device, msg SendableLanMessage, filter Filter) (recMsg ReceivableLanMessage, err error) {
+	source, err := randomSource()
+	if err != nil {
+		return
+	}
+
+	msg.Header.Frame.Source = source
+	msg.Header.Frame.Tagged = true
+	msg.Header.FrameAddress.Target = device.mac
+	msg.Header.FrameAddress.ResRequired = true
+
+	if err = o.send(device.addr, msg); err != nil {
+		return
+	}
+
+	recMsg, _, err = o.readMsg(func(msg ReceivableLanMessage) bool {
+		return checkSourceAndFilter(msg, source, filter)
+	})
+	return
+}
+
+func (o Connector) GetResponseFromAll(msg SendableLanMessage, filter Filter) (recMsgs map[device]ReceivableLanMessage, err error) {
+	if len(o.Devices) == 0 {
+		err = errors.New("no devices; either none are connected or none were discovered")
+		return
+	}
+
+	source, err := randomSource()
+	if err != nil {
+		return
+	}
+
+	msg.Header.Frame.Source = source
+	msg.Header.Frame.Tagged = true
+	msg.Header.FrameAddress.Target = 0
+	msg.Header.FrameAddress.ResRequired = true
+
+	err = o.send(nil, msg)
+	if err != nil {
+		return
+	}
+
+	recMsgs = make(map[device]ReceivableLanMessage)
+	n := len(o.Devices)
+	for n > 0 {
+		var recMsg ReceivableLanMessage
+		recMsg, _, err = o.readMsg(func(msg ReceivableLanMessage) bool {
+			return checkSourceAndFilter(msg, source, filter)
+		})
+		if err != nil {
+			return
+		}
+		var device device
+		device, err = o.findDevice(recMsg.Header.FrameAddress.Target)
+		if err != nil {
+			return
+		}
+		recMsgs[device] = recMsg
+		n--
+	}
+	return
+}
+
+func (o Connector) findDevice(mac uint64) (device, error) {
+	for _, v := range o.Devices {
+		if v.mac == mac {
+			return v, nil
+		}
+	}
+	return device{}, errors.New("device not found")
+}
+
+func checkSourceAndFilter(msg ReceivableLanMessage, source uint32, filter Filter) bool {
+	sourceOk := msg.Header.Frame.Source == source
+
+	if filter != nil {
+		return sourceOk && filter(msg)
+	}
+	return sourceOk
+}
+
+func randomSource() (uint32, error) {
 	b := make([]byte, 4)
 	_, err := rand.Read(b)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return binary.BigEndian.Uint32(b)
+	return binary.BigEndian.Uint32(b), err
 }
