@@ -854,7 +854,6 @@ func (o LightSetPowerLanMessage) MarshalBinary() (data []byte, err error) {
 	return
 }
 
-
 func (o LanDeviceMessageBuilder) LightSetPower(payload LightSetPowerLanMessage) SendableLanMessage {
 	const Type = 117
 
