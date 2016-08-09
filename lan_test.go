@@ -55,7 +55,7 @@ func TestSendableLanMessage_Payload(t *testing.T) {
 		Duration:0x1fffffff,
 	}
 
-	o.Payload(p)
+	o.Payload = p
 
 	if p != o.Payload {
 		t.Error("payload was not set correctly")
@@ -422,7 +422,7 @@ func TestNewReceivablePayloadOfType2(t *testing.T) {
 
 func TestLanDeviceMessageBuilder_Tagged(t *testing.T) {
 	o := LanDeviceMessageBuilder{
-		sarget:0x1,
+		target:0x1,
 	}
 
 	if !o.Tagged() {
@@ -441,7 +441,7 @@ func TestLanDeviceMessageBuilder_Tagged2(t *testing.T) {
 func TestLanDeviceMessageBuilder_buildNormalMessageOfType(t *testing.T) {
 	o := LanDeviceMessageBuilder{
 		source:0x1fffffff,
-		sarget:0x1fffffffffffffff,
+		target:0x1fffffffffffffff,
 		AckRequired:true,
 		ResRequired:true,
 		Sequence:0x1f,
@@ -476,7 +476,7 @@ func TestLanDeviceMessageBuilder_buildNormalMessageOfType(t *testing.T) {
 func TestLanDeviceMessageBuilder_GetService(t *testing.T) {
 	o := LanDeviceMessageBuilder{
 		source:0x1fffffff,
-		sarget:0x1fffffffffffffff,
+		target:0x1fffffffffffffff,
 		AckRequired:true,
 		ResRequired:true,
 		Sequence:0x1f,
@@ -530,7 +530,7 @@ func TestStateServiceLanMessage_UnmarshalBinary(t *testing.T) {
 func TestLanDeviceMessageBuilder_GetHostInfo(t *testing.T) {
 	o := LanDeviceMessageBuilder{
 		source:0x1fffffff,
-		sarget:0x1fffffffffffffff,
+		target:0x1fffffffffffffff,
 		AckRequired:true,
 		ResRequired:true,
 		Sequence:0x1f,
@@ -586,7 +586,7 @@ func TestStateHostInfoLanMessage_UnmarshalBinary(t *testing.T) {
 func TestLanDeviceMessageBuilder_GetHostFirmware(t *testing.T) {
 	o := LanDeviceMessageBuilder{
 		source:0x1fffffff,
-		sarget:0x1fffffffffffffff,
+		target:0x1fffffffffffffff,
 		AckRequired:true,
 		ResRequired:true,
 		Sequence:0x1f,
@@ -641,7 +641,7 @@ func TestStateHostFirmwareLanMessage_UnmarshalBinary(t *testing.T) {
 func TestLanDeviceMessageBuilder_GetWifiInfo(t *testing.T) {
 	o := LanDeviceMessageBuilder{
 		source:0x1fffffff,
-		sarget:0x1fffffffffffffff,
+		target:0x1fffffffffffffff,
 		AckRequired:true,
 		ResRequired:true,
 		Sequence:0x1f,
@@ -697,7 +697,7 @@ func TestStateWifiInfoLanMessage_UnmarshalBinary(t *testing.T) {
 func TestLanDeviceMessageBuilder_GetWifiFirmware(t *testing.T) {
 	o := LanDeviceMessageBuilder{
 		source:0x1fffffff,
-		sarget:0x1fffffffffffffff,
+		target:0x1fffffffffffffff,
 		AckRequired:true,
 		ResRequired:true,
 		Sequence:0x1f,
@@ -752,7 +752,7 @@ func TestStateWifiFirmwareLanMessage_UnmarshalBinary(t *testing.T) {
 func TestLanDeviceMessageBuilder_GetPower(t *testing.T) {
 	o := LanDeviceMessageBuilder{
 		source:0x1fffffff,
-		sarget:0x1fffffffffffffff,
+		target:0x1fffffffffffffff,
 		AckRequired:true,
 		ResRequired:true,
 		Sequence:0x1f,
@@ -804,7 +804,7 @@ func TestSetPowerLanMessage_MarshalBinary(t *testing.T) {
 func TestLanDeviceMessageBuilder_SetPower(t *testing.T) {
 	o := LanDeviceMessageBuilder{
 		source:0x1fffffff,
-		sarget:0x1fffffffffffffff,
+		target:0x1fffffffffffffff,
 		AckRequired:true,
 		ResRequired:true,
 		Sequence:0x1f,
@@ -862,7 +862,7 @@ func TestStatePowerLanMessage_UnmarshalBinary(t *testing.T) {
 func TestLanDeviceMessageBuilder_GetLabel(t *testing.T) {
 	o := LanDeviceMessageBuilder{
 		source:0x1fffffff,
-		sarget:0x1fffffffffffffff,
+		target:0x1fffffffffffffff,
 		AckRequired:true,
 		ResRequired:true,
 		Sequence:0x1f,
@@ -916,7 +916,7 @@ func TestSetLabelLanMessage_MarshalBinary(t *testing.T) {
 func TestLanDeviceMessageBuilder_SetLabel(t *testing.T) {
 	o := LanDeviceMessageBuilder{
 		source:0x1fffffff,
-		sarget:0x1fffffffffffffff,
+		target:0x1fffffffffffffff,
 		AckRequired:true,
 		ResRequired:true,
 		Sequence:0x1f,
@@ -976,7 +976,7 @@ func TestStateLabelLanMessage_UnmarshalBinary(t *testing.T) {
 func TestLanDeviceMessageBuilder_GetVersion(t *testing.T) {
 	o := LanDeviceMessageBuilder{
 		source:0x1fffffff,
-		sarget:0x1fffffffffffffff,
+		target:0x1fffffffffffffff,
 		AckRequired:true,
 		ResRequired:true,
 		Sequence:0x1f,
@@ -1032,7 +1032,7 @@ func TestStateVersionLanMessage_UnmarshalBinary(t *testing.T) {
 func TestLanDeviceMessageBuilder_GetInfo(t *testing.T) {
 	o := LanDeviceMessageBuilder{
 		source:0x1fffffff,
-		sarget:0x1fffffffffffffff,
+		target:0x1fffffffffffffff,
 		AckRequired:true,
 		ResRequired:true,
 		Sequence:0x1f,
@@ -1089,7 +1089,7 @@ func TestStateInfoLanMessage_UnmarshalBinary(t *testing.T) {
 func TestLanDeviceMessageBuilder_GetLocation(t *testing.T) {
 	o := LanDeviceMessageBuilder{
 		source:0x1fffffff,
-		sarget:0x1fffffffffffffff,
+		target:0x1fffffffffffffff,
 		AckRequired:true,
 		ResRequired:true,
 		Sequence:0x1f,
@@ -1149,7 +1149,7 @@ func TestStateLocationLanMessage_UnmarshalBinary(t *testing.T) {
 func TestLanDeviceMessageBuilder_GetGroup(t *testing.T) {
 	o := LanDeviceMessageBuilder{
 		source:0x1fffffff,
-		sarget:0x1fffffffffffffff,
+		target:0x1fffffffffffffff,
 		AckRequired:true,
 		ResRequired:true,
 		Sequence:0x1f,
@@ -1236,7 +1236,7 @@ func TestEchoRequestLanMessage_MarshalBinary(t *testing.T) {
 func TestLanDeviceMessageBuilder_EchoRequest(t *testing.T) {
 	o := LanDeviceMessageBuilder{
 		source:0x1fffffff,
-		sarget:0x1fffffffffffffff,
+		target:0x1fffffffffffffff,
 		AckRequired:true,
 		ResRequired:true,
 		Sequence:0x1f,
@@ -1378,7 +1378,7 @@ func TestHSBK_UnmarshalBinary(t *testing.T) {
 func TestLanDeviceMessageBuilder_LightGet(t *testing.T) {
 	o := LanDeviceMessageBuilder{
 		source:0x1fffffff,
-		sarget:0x1fffffffffffffff,
+		target:0x1fffffffffffffff,
 		AckRequired:true,
 		ResRequired:true,
 		Sequence:0x1f,
@@ -1437,7 +1437,7 @@ func TestLightSetColorLanMessage_MarshalBinary(t *testing.T) {
 func TestLanDeviceMessageBuilder_LightSetColor(t *testing.T) {
 	o := LanDeviceMessageBuilder{
 		source:0x1fffffff,
-		sarget:0x1fffffffffffffff,
+		target:0x1fffffffffffffff,
 		AckRequired:true,
 		ResRequired:true,
 		Sequence:0x1f,
@@ -1511,7 +1511,7 @@ func TestLightStateLanMessage_UnmarshalBinary(t *testing.T) {
 func TestLanDeviceMessageBuilder_LightGetPower(t *testing.T) {
 	o := LanDeviceMessageBuilder{
 		source:0x1fffffff,
-		sarget:0x1fffffffffffffff,
+		target:0x1fffffffffffffff,
 		AckRequired:true,
 		ResRequired:true,
 		Sequence:0x1f,
@@ -1564,7 +1564,7 @@ func TestLightSetPowerLanMessage_MarshalBinary(t *testing.T) {
 func TestLanDeviceMessageBuilder_LightSetPower(t *testing.T) {
 	o := LanDeviceMessageBuilder{
 		source:0x1fffffff,
-		sarget:0x1fffffffffffffff,
+		target:0x1fffffffffffffff,
 		AckRequired:true,
 		ResRequired:true,
 		Sequence:0x1f,
