@@ -1,7 +1,6 @@
 package controlifx
 
 import (
-	"encoding/binary"
 	"math/rand"
 	"net"
 	"time"
@@ -63,11 +62,7 @@ func (o *Connector) send(addr *net.UDPAddr, msg SendableLanMessage) error {
 }
 
 func (o *Connector) bcastGetService() (uint32, error) {
-	source, err := randomSource()
-	if err != nil {
-		return source, err
-	}
-
+	source := rand.Uint32()
 	msg := LanDeviceMessageBuilder{source:source}.GetService()
 	msg.Header.Frame.Tagged = true
 	return source, o.send(nil, msg)
@@ -157,11 +152,7 @@ func (o Connector) SendToAll(msg SendableLanMessage) error {
 }
 
 func (o Connector) GetResponseFrom(device device, msg SendableLanMessage, filter Filter) (recMsg ReceivableLanMessage, err error) {
-	source, err := randomSource()
-	if err != nil {
-		return
-	}
-
+	source := rand.Uint32()
 	msg.Header.Frame.Source = source
 	msg.Header.Frame.Tagged = true
 	msg.Header.FrameAddress.Target = device.mac
@@ -183,11 +174,7 @@ func (o Connector) GetResponseFromAll(msg SendableLanMessage, filter Filter) (re
 		return
 	}
 
-	source, err := randomSource()
-	if err != nil {
-		return
-	}
-
+	source := rand.Uint32()
 	msg.Header.Frame.Source = source
 	msg.Header.Frame.Tagged = true
 	msg.Header.FrameAddress.Target = 0
@@ -235,10 +222,4 @@ func checkSourceAndFilter(msg ReceivableLanMessage, source uint32, filter Filter
 		return sourceOk && filter(msg)
 	}
 	return sourceOk
-}
-
-func randomSource() (uint32, error) {
-	b := make([]byte, 4)
-	_, err := rand.Read(b)
-	return binary.BigEndian.Uint32(b), err
 }
