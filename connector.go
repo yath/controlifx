@@ -136,6 +136,9 @@ func (o *Connector) DiscoverNDevices(n int) error {
 			return msg.Header.Frame.Source == source && ok && payload.Service == 1
 		})
 		if err != nil {
+			if err.(net.Error).Timeout() {
+				break
+			}
 			return err
 		}
 		o.Devices = append(o.Devices, Device{
@@ -200,6 +203,9 @@ func (o *Connector) DiscoverFilteredDevices(filter DiscoverFilter) error {
 			return msg.Header.Frame.Source == source && ok && payload.Service == 1
 		})
 		if err != nil {
+			if err.(net.Error).Timeout() {
+				break
+			}
 			return err
 		}
 		d := Device{
@@ -283,6 +289,9 @@ func (o Connector) GetResponseFrom(device Device, msg SendableLanMessage, filter
 	recMsg, _, err = o.readMsg(func(msg ReceivableLanMessage) bool {
 		return checkSourceAndFilter(msg, source, filter)
 	})
+	if err.(net.Error).Timeout() {
+		err = nil
+	}
 	return
 }
 
@@ -315,7 +324,10 @@ func (o Connector) GetResponseFromAll(msg SendableLanMessage, filter Filter) (re
 			return checkSourceAndFilter(msg, source, filter)
 		})
 		if err != nil {
-			return
+			if err.(net.Error).Timeout() {
+				err = nil
+			}
+			break
 		}
 		if device, err := o.findDevice(recMsg.Header.FrameAddress.Target); err == nil {
 			recMsgs[device] = recMsg
