@@ -314,55 +314,55 @@ func (o Time) MarshalBinary() (data []byte, _ error) {
 	return
 }
 
-func NewReceivablePayloadOfType(t uint16) (encoding.BinaryUnmarshaler, error) {
-	const (
-		StateService      = 3
-		StateHostInfo     = 13
-		StateHostFirmware = 15
-		StateWifiInfo     = 17
-		StateWifiFirmware = 19
-		StatePower        = 22
-		StateLabel        = 25
-		StateVersion      = 33
-		StateInfo         = 35
-		Acknowledgement   = 45
-		StateLocation     = 50
-		StateGroup        = 53
-		EchoResponse      = 59
-		LightState        = 107
-		LightStatePower   = 118
-	)
+const (
+	StateServiceType      = 3
+	StateHostInfoType     = 13
+	StateHostFirmwareType = 15
+	StateWifiInfoType     = 17
+	StateWifiFirmwareType = 19
+	StatePowerType        = 22
+	StateLabelType        = 25
+	StateVersionType      = 33
+	StateInfoType         = 35
+	AcknowledgementType   = 45
+	StateLocationType     = 50
+	StateGroupType        = 53
+	EchoResponseType      = 59
+	LightStateType        = 107
+	LightStatePowerType   = 118
+)
 
+func NewReceivablePayloadOfType(t uint16) (encoding.BinaryUnmarshaler, error) {
 	switch t {
-	case StateService:
+	case StateServiceType:
 		return &StateServiceLanMessage{}, nil
-	case StateHostInfo:
+	case StateHostInfoType:
 		return &StateHostInfoLanMessage{}, nil
-	case StateHostFirmware:
+	case StateHostFirmwareType:
 		return &StateHostFirmwareLanMessage{}, nil
-	case StateWifiInfo:
+	case StateWifiInfoType:
 		return &StateWifiInfoLanMessage{}, nil
-	case StateWifiFirmware:
+	case StateWifiFirmwareType:
 		return &StateWifiFirmwareLanMessage{}, nil
-	case StatePower:
+	case StatePowerType:
 		return &StatePowerLanMessage{}, nil
-	case StateLabel:
+	case StateLabelType:
 		return &StateLabelLanMessage{}, nil
-	case StateVersion:
+	case StateVersionType:
 		return &StateVersionLanMessage{}, nil
-	case StateInfo:
+	case StateInfoType:
 		return &StateInfoLanMessage{}, nil
-	case Acknowledgement:
+	case AcknowledgementType:
 		return &AcknowledgementLanMessage{}, nil
-	case StateLocation:
+	case StateLocationType:
 		return &StateLocationLanMessage{}, nil
-	case StateGroup:
+	case StateGroupType:
 		return &StateGroupLanMessage{}, nil
-	case EchoResponse:
+	case EchoResponseType:
 		return &EchoResponseLanMessage{}, nil
-	case LightState:
+	case LightStateType:
 		return &LightStatePowerLanMessage{}, nil
-	case LightStatePower:
+	case LightStatePowerType:
 		return &LightStatePowerLanMessage{}, nil
 	default:
 		return nil, errors.New("cannot create new payload of type; is it binary encodable?")
