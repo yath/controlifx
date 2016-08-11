@@ -402,10 +402,29 @@ func (o LanDeviceMessageBuilder) buildNormalMessageOfType(t uint16) SendableLanM
 	}
 }
 
-func (o LanDeviceMessageBuilder) GetService() SendableLanMessage {
-	const Type = 2
+const (
+	GetServiceType      = 2
+	GetHostInfoType     = 12
+	GetHostFirmwareType = 14
+	GetWifiInfoType     = 16
+	GetWifiFirmwareType = 18
+	GetPowerType        = 20
+	SetPowerType        = 21
+	GetLabelType        = 23
+	SetLabelType        = 24
+	GetVersionType      = 32
+	GetInfoType         = 34
+	GetLocationType     = 48
+	GetGroupType        = 51
+	EchoRequestType     = 58
+	LightGetType        = 101
+	LightSetColorType   = 102
+	LightGetPowerType   = 116
+	LightSetPowerType   = 117
+)
 
-	return o.buildNormalMessageOfType(Type)
+func (o LanDeviceMessageBuilder) GetService() SendableLanMessage {
+	return o.buildNormalMessageOfType(GetServiceType)
 }
 
 type StateServiceLanMessage struct {
@@ -424,9 +443,7 @@ func (o *StateServiceLanMessage) UnmarshalBinary(data []byte) error {
 }
 
 func (o LanDeviceMessageBuilder) GetHostInfo() SendableLanMessage {
-	const Type = 12
-
-	return o.buildNormalMessageOfType(Type)
+	return o.buildNormalMessageOfType(GetHostInfoType)
 }
 
 type StateHostInfoLanMessage struct {
@@ -449,9 +466,7 @@ func (o *StateHostInfoLanMessage) UnmarshalBinary(data []byte) error {
 }
 
 func (o LanDeviceMessageBuilder) GetHostFirmware() SendableLanMessage {
-	const Type = 14
-
-	return o.buildNormalMessageOfType(Type)
+	return o.buildNormalMessageOfType(GetHostFirmwareType)
 }
 
 type StateHostFirmwareLanMessage struct {
@@ -470,9 +485,7 @@ func (o *StateHostFirmwareLanMessage) UnmarshalBinary(data []byte) error {
 }
 
 func (o LanDeviceMessageBuilder) GetWifiInfo() SendableLanMessage {
-	const Type = 16
-
-	return o.buildNormalMessageOfType(Type)
+	return o.buildNormalMessageOfType(GetWifiInfoType)
 }
 
 type StateWifiInfoLanMessage struct {
@@ -495,9 +508,7 @@ func (o *StateWifiInfoLanMessage) UnmarshalBinary(data []byte) error {
 }
 
 func (o LanDeviceMessageBuilder) GetWifiFirmware() SendableLanMessage {
-	const Type = 18
-
-	return o.buildNormalMessageOfType(Type)
+	return o.buildNormalMessageOfType(GetWifiFirmwareType)
 }
 
 type StateWifiFirmwareLanMessage struct {
@@ -516,9 +527,7 @@ func (o *StateWifiFirmwareLanMessage) UnmarshalBinary(data []byte) error {
 }
 
 func (o LanDeviceMessageBuilder) GetPower() SendableLanMessage {
-	const Type = 20
-
-	return o.buildNormalMessageOfType(Type)
+	return o.buildNormalMessageOfType(GetPowerType)
 }
 
 type SetPowerLanMessage struct {
@@ -530,9 +539,7 @@ func (o SetPowerLanMessage) MarshalBinary() ([]byte, error) {
 }
 
 func (o LanDeviceMessageBuilder) SetPower(payload SetPowerLanMessage) SendableLanMessage {
-	const Type = 21
-
-	msg := o.buildNormalMessageOfType(Type)
+	msg := o.buildNormalMessageOfType(SetPowerType)
 
 	msg.Payload = payload
 	msg.updateSize()
@@ -551,9 +558,7 @@ func (o *StatePowerLanMessage) UnmarshalBinary(data []byte) error {
 }
 
 func (o LanDeviceMessageBuilder) GetLabel() SendableLanMessage {
-	const Type = 23
-
-	return o.buildNormalMessageOfType(Type)
+	return o.buildNormalMessageOfType(GetLabelType)
 }
 
 type SetLabelLanMessage struct {
@@ -565,9 +570,7 @@ func (o SetLabelLanMessage) MarshalBinary() ([]byte, error) {
 }
 
 func (o LanDeviceMessageBuilder) SetLabel(payload SetLabelLanMessage) SendableLanMessage {
-	const Type = 24
-
-	msg := o.buildNormalMessageOfType(Type)
+	msg := o.buildNormalMessageOfType(SetLabelType)
 
 	msg.Payload = payload
 	msg.updateSize()
@@ -586,9 +589,7 @@ func (o *StateLabelLanMessage) UnmarshalBinary(data []byte) error {
 }
 
 func (o LanDeviceMessageBuilder) GetVersion() SendableLanMessage {
-	const Type = 32
-
-	return o.buildNormalMessageOfType(Type)
+	return o.buildNormalMessageOfType(GetVersionType)
 }
 
 type StateVersionLanMessage struct {
@@ -611,9 +612,7 @@ func (o *StateVersionLanMessage) UnmarshalBinary(data []byte) error {
 }
 
 func (o LanDeviceMessageBuilder) GetInfo() SendableLanMessage {
-	const Type = 34
-
-	return o.buildNormalMessageOfType(Type)
+	return o.buildNormalMessageOfType(GetInfoType)
 }
 
 type StateInfoLanMessage struct {
@@ -642,9 +641,7 @@ func (o *AcknowledgementLanMessage) UnmarshalBinary(data []byte) error {
 }
 
 func (o LanDeviceMessageBuilder) GetLocation() SendableLanMessage {
-	const Type = 48
-
-	return o.buildNormalMessageOfType(Type)
+	return o.buildNormalMessageOfType(GetLocationType)
 }
 
 type StateLocationLanMessage struct {
@@ -667,9 +664,7 @@ func (o *StateLocationLanMessage) UnmarshalBinary(data []byte) error {
 }
 
 func (o LanDeviceMessageBuilder) GetGroup() SendableLanMessage {
-	const Type = 51
-
-	return o.buildNormalMessageOfType(Type)
+	return o.buildNormalMessageOfType(GetGroupType)
 }
 
 type StateGroupLanMessage struct {
@@ -700,9 +695,7 @@ func (o EchoRequestLanMessage) MarshalBinary() ([]byte, error) {
 }
 
 func (o LanDeviceMessageBuilder) EchoRequest(payload EchoRequestLanMessage) SendableLanMessage {
-	const Type = 58
-
-	msg := o.buildNormalMessageOfType(Type)
+	msg := o.buildNormalMessageOfType(EchoRequestType)
 
 	msg.Payload = payload
 	msg.updateSize()
@@ -766,9 +759,7 @@ func (o *HSBK) UnmarshalBinary(data []byte) error {
 }
 
 func (o LanDeviceMessageBuilder) LightGet() SendableLanMessage {
-	const Type = 101
-
-	return o.buildNormalMessageOfType(Type)
+	return o.buildNormalMessageOfType(LightGetType)
 }
 
 type LightSetColorLanMessage struct {
@@ -794,9 +785,7 @@ func (o LightSetColorLanMessage) MarshalBinary() (data []byte, err error) {
 }
 
 func (o LanDeviceMessageBuilder) LightSetColor(payload LightSetColorLanMessage) SendableLanMessage {
-	const Type = 102
-
-	msg := o.buildNormalMessageOfType(Type)
+	msg := o.buildNormalMessageOfType(LightSetColorType)
 
 	msg.Payload = payload
 	msg.updateSize()
@@ -827,9 +816,7 @@ func (o *LightStateLanMessage) UnmarshalBinary(data []byte) error {
 }
 
 func (o LanDeviceMessageBuilder) LightGetPower() SendableLanMessage {
-	const Type = 116
-
-	return o.buildNormalMessageOfType(Type)
+	return o.buildNormalMessageOfType(LightGetPowerType)
 }
 
 type LightSetPowerLanMessage struct {
@@ -855,9 +842,7 @@ func (o LightSetPowerLanMessage) MarshalBinary() (data []byte, err error) {
 }
 
 func (o LanDeviceMessageBuilder) LightSetPower(payload LightSetPowerLanMessage) SendableLanMessage {
-	const Type = 117
-
-	msg := o.buildNormalMessageOfType(Type)
+	msg := o.buildNormalMessageOfType(LightSetPowerType)
 
 	msg.Payload = payload
 	msg.updateSize()
