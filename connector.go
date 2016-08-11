@@ -39,7 +39,7 @@ type (
 type Device struct {
 	// Addr is the remote address of the device.
 	Addr *net.UDPAddr
-	// Max is the MAC address of the device.
+	// Mac is the MAC address of the device.
 	Mac  uint64
 }
 
