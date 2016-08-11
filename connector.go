@@ -267,7 +267,8 @@ func (o Connector) BlindSendToAll(msg SendableLanMessage) error {
 }
 
 // GetResponseFrom sends the given msg to the device and waits for a response,
-// filtering out extraneous responses with filter.
+// filtering out extraneous responses with filter. It returns the received
+// response.
 func (o Connector) GetResponseFrom(device Device, msg SendableLanMessage, filter Filter) (recMsg ReceivableLanMessage, err error) {
 	source := rand.Uint32()
 	msg.Header.Frame.Source = source
@@ -287,7 +288,8 @@ func (o Connector) GetResponseFrom(device Device, msg SendableLanMessage, filter
 
 // GetResponseFromAll sends the given msg to all discovered devices and waits
 // for responses from all of them, filtering out extraneous responses with
-// filter.
+// filter. It returns a mapping of the responding devices and their respective
+// responses.
 func (o Connector) GetResponseFromAll(msg SendableLanMessage, filter Filter) (recMsgs map[Device]ReceivableLanMessage, err error) {
 	if len(o.Devices) == 0 {
 		err = errors.New("no devices; either none are connected or none were discovered")
