@@ -10,37 +10,49 @@ import (
 )
 
 const (
+	// NormalDiscoveryTimeout A sane discover timeout specified in milliseconds.
 	NormalDiscoverTimeout = 250
 
 	maxReadSize = LanHeaderSize+64
 )
 
 type (
-	// Returns true when the given message is part of the expected
-	// response(s). For example, the message may have to have a certain
-	// type, and so false is returned for messages that don't match that
-	// condition.
+	// Filter is responsible for filtering out extraneous network responses
+	// that should not be further processed. It returns true when the given
+	// message should be further processed. For example, the message may
+	// have to have a certain type, and so false should be returned for
+	// messages that don't match that condition.
 	Filter func(ReceivableLanMessage) bool
 
-	// The first bool return should specify if the device should be
-	// registered with the connector. The second bool return should be true
-	// when discovery should continue, false otherwise. The message will be
-	// the response to the discovery broadcast with a payload type of
-	// StateServiceLanMessage, while the device will have the IP address and
-	// MAC of the discovered device.
+	// DiscoverFilter is responsible for controlling which devices are to be
+	// registered and whether more devices should be discovered. The first
+	// return value should specify if the device should be registered with
+	// the connector. The second return value should be true when discovery
+	// should continue, or false otherwise. The message will be the response
+	// to the discovery broadcast with a payload type of
+	// StateServiceLanMessage, while the device will be the not yet
+	// registered responding device.
 	DiscoverFilter func(ReceivableLanMessage, Device) (bool, bool)
 )
 
+// Device is a LIFX device on the LAN.
 type Device struct {
+	// Addr is the remote address of the device.
 	Addr *net.UDPAddr
+	// Max is the MAC address of the device.
 	Mac  uint64
 }
 
+// Connector is the connection between the client and network devices.
 type Connector struct {
 	bcastAddr *net.UDPAddr
 	conn      *net.UDPConn
 
+	// DiscoverTimeout is the maximum number of milliseconds to wait to
+	// discover devices. A zero value represents no timeout, however a sane
+	// one will be used regardless if discovering via DiscoverAllDevices.
 	DiscoverTimeout int
+	// Devices is all of the discovered devices on the network.
 	Devices         []Device
 }
 
@@ -108,6 +120,8 @@ func (o *Connector) readMsg(filter Filter) (msg ReceivableLanMessage, raddr *net
 	return
 }
 
+// DiscoverNDevices discovers n devices on the network, returning as soon as n
+// devices respond or when DiscoverTimeout is reached, whichever comes first.
 func (o *Connector) DiscoverNDevices(n int) error {
 	source, err := o.bcastGetService()
 	if err != nil {
@@ -134,6 +148,9 @@ func (o *Connector) DiscoverNDevices(n int) error {
 	return o.conn.SetDeadline(time.Time{})
 }
 
+// DiscoverAllDevices discovers as many devices as possible until
+// DiscoverTimeout is reached. If DiscoverTimeout is the zero value, a sane
+// default will be used (250 ms).
 func (o *Connector) DiscoverAllDevices() error {
 	source, err := o.bcastGetService()
 	if err != nil {
@@ -167,6 +184,8 @@ func (o *Connector) DiscoverAllDevices() error {
 	return o.conn.SetDeadline(time.Time{})
 }
 
+// DiscoverFilteredDevices discovers devices until DiscoverTimeout is reached or
+// the filter's second return value is false, whichever comes first.
 func (o *Connector) DiscoverFilteredDevices(filter DiscoverFilter) error {
 	source, err := o.bcastGetService()
 	if err != nil {
@@ -208,6 +227,7 @@ func (o *Connector) setReadDeadlineIfApplicable() error {
 	return nil
 }
 
+// RemoveDevices removes the given device from the list of discovered devices.
 func (o *Connector) RemoveDevice(device Device) bool {
 	for i, d := range o.Devices {
 		if d.Mac == device.Mac {
@@ -218,11 +238,14 @@ func (o *Connector) RemoveDevice(device Device) bool {
 	return false
 }
 
+// SendTo sends the given msg to the device, not expecting a response.
 func (o Connector) SendTo(device Device, msg SendableLanMessage) error {
 	msg.Header.FrameAddress.Target = device.Mac
 	return o.send(device.Addr, msg)
 }
 
+// SendToAll sends the given msg to all discovered devices, not expecting
+// responses.
 func (o Connector) SendToAll(msg SendableLanMessage) error {
 	if len(o.Devices) == 0 {
 		return errors.New("no devices; either none are connected or none were discovered")
@@ -236,11 +259,15 @@ func (o Connector) SendToAll(msg SendableLanMessage) error {
 	return nil
 }
 
+// BlindSendToAll sends the given msg to all devices on the network, without
+// having to discover them first.
 func (o Connector) BlindSendToAll(msg SendableLanMessage) error {
 	msg.Header.FrameAddress.Target = 0
 	return o.send(nil, msg)
 }
 
+// GetResponseFrom sends the given msg to the device and waits for a response,
+// filtering out extraneous responses with filter.
 func (o Connector) GetResponseFrom(device Device, msg SendableLanMessage, filter Filter) (recMsg ReceivableLanMessage, err error) {
 	source := rand.Uint32()
 	msg.Header.Frame.Source = source
@@ -258,6 +285,9 @@ func (o Connector) GetResponseFrom(device Device, msg SendableLanMessage, filter
 	return
 }
 
+// GetResponseFromAll sends the given msg to all discovered devices and waits
+// for responses from all of them, filtering out extraneous responses with
+// filter.
 func (o Connector) GetResponseFromAll(msg SendableLanMessage, filter Filter) (recMsgs map[Device]ReceivableLanMessage, err error) {
 	if len(o.Devices) == 0 {
 		err = errors.New("no devices; either none are connected or none were discovered")
@@ -302,6 +332,10 @@ func (o Connector) findDevice(mac uint64) (Device, error) {
 	return Device{}, errors.New("device not found")
 }
 
+// TypeFilter filters out responses that do not have a payload of the given type
+// t. Since assuring that the payload of a response is a certain type is such a
+// common task when receiving responses, this func has been provided for
+// convenience.
 func TypeFilter(t encoding.BinaryUnmarshaler) Filter {
 	return func(msg ReceivableLanMessage) bool {
 		return reflect.TypeOf(msg.Payload).ConvertibleTo(reflect.TypeOf(t))
