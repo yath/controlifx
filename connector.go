@@ -227,7 +227,7 @@ func (o Connector) getReadDeadlineIfApplicable() time.Time {
 
 // SendTo sends the message to each device, not expecting responses.
 func (o *Connector) SendTo(msg SendableLanMessage, devices []Device) error {
-	msg.Header.Frame.Tagged = false
+	msg.Header.Frame.Tagged = true
 	ch := make(chan error)
 	for _, v := range devices {
 		go func(msg SendableLanMessage, device Device) {
@@ -251,8 +251,6 @@ func (o *Connector) SendTo(msg SendableLanMessage, devices []Device) error {
 // SendToAll sends the message to all devices on the network, not expecting
 // responses.
 func (o *Connector) SendToAll(msg SendableLanMessage) error {
-	msg.Header.Frame.Tagged = false
-	msg.Header.FrameAddress.Target = 0
 	return o.send(nil, msg)
 }
 
