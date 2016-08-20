@@ -52,26 +52,20 @@ type Connector struct {
 	// discover devices. A zero value represents no timeout, however a sane
 	// one will be used regardless if discovering via DiscoverAllDevices.
 	DiscoverTimeout int
-	// Devices is all of the discovered devices on the network.
-	Devices         []Device
 }
 
 func (o *Connector) connect() error {
 	if o.conn != nil {
 		return nil
 	}
-
 	const PortStr = "56700"
-
 	laddr, err := net.ResolveUDPAddr("udp", net.JoinHostPort(net.IPv4zero.String(), PortStr))
 	if err != nil {
 		return err
 	}
-
 	if o.bcastAddr, err = net.ResolveUDPAddr("udp", net.JoinHostPort(net.IPv4bcast.String(), PortStr)); err != nil {
 		return err
 	}
-
 	o.conn, err = net.ListenUDP("udp", laddr)
 	return err
 }
@@ -80,16 +74,13 @@ func (o *Connector) send(addr *net.UDPAddr, msg SendableLanMessage) error {
 	if err := o.connect(); err != nil {
 		return err
 	}
-
 	if addr == nil {
 		addr = o.bcastAddr
 	}
-
 	b, err := msg.MarshalBinary()
 	if err != nil {
 		return err
 	}
-
 	_, err = o.conn.WriteTo(b, addr)
 	return err
 }
@@ -101,7 +92,7 @@ func (o *Connector) bcastGetService() (uint32, error) {
 	return source, o.send(nil, msg)
 }
 
-func (o *Connector) readMsg(filter Filter) (msg ReceivableLanMessage, raddr *net.UDPAddr, err error) {
+func (o Connector) readMsg(filter Filter) (msg ReceivableLanMessage, raddr *net.UDPAddr, err error) {
 	for {
 		b := make([]byte, maxReadSize)
 		var n int
@@ -110,11 +101,10 @@ func (o *Connector) readMsg(filter Filter) (msg ReceivableLanMessage, raddr *net
 			return
 		}
 		b = b[:n]
-
 		msg = ReceivableLanMessage{}
 		err = msg.UnmarshalBinary(b)
 		if err == nil && filter(msg) {
-			break
+			return
 		}
 	}
 	return
@@ -122,15 +112,16 @@ func (o *Connector) readMsg(filter Filter) (msg ReceivableLanMessage, raddr *net
 
 // DiscoverNDevices discovers n devices on the network, returning as soon as n
 // devices respond or when DiscoverTimeout is reached, whichever comes first.
-func (o *Connector) DiscoverNDevices(n int) error {
+// If DiscoverTimeout is the zero value, this function will not time out.
+func (o *Connector) DiscoverNDevices(n int) ([]Device, error) {
+	devices := make([]Device, n)
 	source, err := o.bcastGetService()
 	if err != nil {
-		return err
+		return devices, err
 	}
-
-	o.setReadDeadlineIfApplicable()
-
-	for n > 0 {
+	o.conn.SetReadDeadline(o.getReadDeadlineIfApplicable())
+	var i int
+	for i < n {
 		msg, raddr, err := o.readMsg(func(msg ReceivableLanMessage) bool {
 			payload, ok := msg.Payload.(*StateServiceLanMessage)
 			return msg.Header.Frame.Source == source && ok && payload.Service == 1
@@ -139,32 +130,34 @@ func (o *Connector) DiscoverNDevices(n int) error {
 			if err.(net.Error).Timeout() {
 				break
 			}
-			return err
+			return devices, err
 		}
-		o.Devices = append(o.Devices, Device{
+		devices[i] = Device{
 			Addr: raddr,
 			Mac: msg.Header.FrameAddress.Target,
-		})
-		n--
+		}
+		i++
 	}
 	// Remove read deadline.
-	return o.conn.SetDeadline(time.Time{})
+	return devices, o.conn.SetDeadline(time.Time{})
 }
 
 // DiscoverAllDevices discovers as many devices as possible until
 // DiscoverTimeout is reached. If DiscoverTimeout is the zero value, a sane
 // default will be used (250 ms).
-func (o *Connector) DiscoverAllDevices() error {
+func (o *Connector) DiscoverAllDevices() ([]Device, error) {
+	var devices []Device
 	source, err := o.bcastGetService()
 	if err != nil {
-		return err
+		return devices, err
 	}
 
 	// Discovering all devices requires a timeout.
-	if o.DiscoverTimeout == 0 {
-		o.DiscoverTimeout = NormalDiscoverTimeout
+	readDeadline := o.getReadDeadlineIfApplicable()
+	if readDeadline.IsZero() {
+		readDeadline = time.Now().Add(NormalDiscoverTimeout*time.Millisecond)
 	}
-	o.setReadDeadlineIfApplicable()
+	o.conn.SetReadDeadline(readDeadline)
 
 	for {
 		msg, raddr, err := o.readMsg(func(msg ReceivableLanMessage) bool {
@@ -175,28 +168,28 @@ func (o *Connector) DiscoverAllDevices() error {
 			if err.(net.Error).Timeout() {
 				break
 			}
-			return err
+			return devices, err
 		}
-		o.Devices = append(o.Devices, Device{
+		devices = append(devices, Device{
 			Addr: raddr,
 			Mac: msg.Header.FrameAddress.Target,
 		})
 	}
 
 	// Remove read deadline.
-	return o.conn.SetDeadline(time.Time{})
+	return devices, o.conn.SetDeadline(time.Time{})
 }
 
 // DiscoverFilteredDevices discovers devices until DiscoverTimeout is reached or
-// the filter's second return value is false, whichever comes first.
-func (o *Connector) DiscoverFilteredDevices(filter DiscoverFilter) error {
+// the filter's second return value is false, whichever comes first. If
+// DiscoverTimeout is the zero value, this function will not time out.
+func (o *Connector) DiscoverFilteredDevices(filter DiscoverFilter) ([]Device, error) {
+	var devices []Device
 	source, err := o.bcastGetService()
 	if err != nil {
-		return err
+		return devices, err
 	}
-
-	o.setReadDeadlineIfApplicable()
-
+	o.conn.SetReadDeadline(o.getReadDeadlineIfApplicable())
 	for {
 		msg, raddr, err := o.readMsg(func(msg ReceivableLanMessage) bool {
 			payload, ok := msg.Payload.(*StateServiceLanMessage)
@@ -206,16 +199,15 @@ func (o *Connector) DiscoverFilteredDevices(filter DiscoverFilter) error {
 			if err.(net.Error).Timeout() {
 				break
 			}
-			return err
+			return devices, err
 		}
 		d := Device{
 			Addr: raddr,
 			Mac: msg.Header.FrameAddress.Target,
 		}
 		register, cont := filter(msg, d)
-
 		if register {
-			o.Devices = append(o.Devices, d)
+			devices = append(devices, d)
 		}
 		if !cont {
 			break
@@ -223,101 +215,58 @@ func (o *Connector) DiscoverFilteredDevices(filter DiscoverFilter) error {
 	}
 
 	// Remove read deadline.
-	return o.conn.SetDeadline(time.Time{})
+	return devices, o.conn.SetDeadline(time.Time{})
 }
 
-func (o *Connector) setReadDeadlineIfApplicable() error {
+func (o Connector) getReadDeadlineIfApplicable() time.Time {
 	if o.DiscoverTimeout > 0 {
-		return o.conn.SetDeadline(time.Now().Add(time.Duration(o.DiscoverTimeout)*time.Millisecond))
+		return time.Now().Add(time.Duration(o.DiscoverTimeout)*time.Millisecond)
+	}
+	return time.Time{}
+}
+
+// SendTo sends the message to each device, not expecting responses.
+func (o *Connector) SendTo(msg SendableLanMessage, devices []Device) error {
+	msg.Header.Frame.Tagged = false
+	ch := make(chan error)
+	for _, v := range devices {
+		go func(msg SendableLanMessage, device Device) {
+			msg.Header.FrameAddress.Target = device.Mac
+			ch <- o.send(device.Addr, msg)
+		}(msg, v)
+	}
+	var i int
+	for i < len(devices) {
+		select {
+		case err := <-ch:
+			i++
+			if err != nil {
+				return err
+			}
+		}
 	}
 	return nil
 }
 
-// RemoveDevices removes the given device from the list of discovered devices.
-func (o *Connector) RemoveDevice(device Device) bool {
-	for i, d := range o.Devices {
-		if d.Mac == device.Mac {
-			o.Devices = append(o.Devices[:i], o.Devices[i+1:]...)
-			return true
-		}
-	}
-	return false
-}
-
-// SendTo sends the given msg to the device, not expecting a response.
-func (o Connector) SendTo(device Device, msg SendableLanMessage) error {
-	msg.Header.FrameAddress.Target = device.Mac
-	return o.send(device.Addr, msg)
-}
-
-// SendToAll sends the given msg to all discovered devices, not expecting
+// SendToAll sends the message to all devices on the network, not expecting
 // responses.
-func (o Connector) SendToAll(msg SendableLanMessage) error {
-	if len(o.Devices) == 0 {
-		return errors.New("no devices; either none are connected or none were discovered")
-	}
-
-	for _, device := range o.Devices {
-		if err := o.SendTo(device, msg); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// BlindSendToAll sends the given msg to all devices on the network, without
-// having to discover them first.
-func (o Connector) BlindSendToAll(msg SendableLanMessage) error {
+func (o *Connector) SendToAll(msg SendableLanMessage) error {
+	msg.Header.Frame.Tagged = false
 	msg.Header.FrameAddress.Target = 0
 	return o.send(nil, msg)
 }
 
-// GetResponseFrom sends the given msg to the device and waits for a response,
-// filtering out extraneous responses with filter. It returns the received
-// response.
-func (o Connector) GetResponseFrom(device Device, msg SendableLanMessage, filter Filter) (recMsg ReceivableLanMessage, err error) {
+// SendToAndGet sends the message to the devices, filtering each response and
+// returning a mapping between the responding device and its response.
+func (o *Connector) SendToAndGet(msg SendableLanMessage, filter Filter, devices []Device) (recMsgs map[Device]ReceivableLanMessage, err error) {
 	source := rand.Uint32()
 	msg.Header.Frame.Source = source
-	msg.Header.Frame.Tagged = true
-	msg.Header.FrameAddress.Target = device.Mac
 	msg.Header.FrameAddress.ResRequired = true
-
-	if err = o.send(device.Addr, msg); err != nil {
+	if err = o.SendTo(msg, devices); err != nil {
 		return
 	}
-
-	recMsg, _, err = o.readMsg(func(msg ReceivableLanMessage) bool {
-		return checkSourceAndFilter(msg, source, filter)
-	})
-	if err.(net.Error).Timeout() {
-		err = nil
-	}
-	return
-}
-
-// GetResponseFromAll sends the given msg to all discovered devices and waits
-// for responses from all of them, filtering out extraneous responses with
-// filter. It returns a mapping of the responding devices and their respective
-// responses.
-func (o Connector) GetResponseFromAll(msg SendableLanMessage, filter Filter) (recMsgs map[Device]ReceivableLanMessage, err error) {
-	if len(o.Devices) == 0 {
-		err = errors.New("no devices; either none are connected or none were discovered")
-		return
-	}
-
-	source := rand.Uint32()
-	msg.Header.Frame.Source = source
-	msg.Header.Frame.Tagged = false
-	msg.Header.FrameAddress.Target = 0
-	msg.Header.FrameAddress.ResRequired = true
-
-	err = o.send(nil, msg)
-	if err != nil {
-		return
-	}
-
 	recMsgs = make(map[Device]ReceivableLanMessage)
-	n := len(o.Devices)
+	n := len(devices)
 	for n > 0 {
 		var recMsg ReceivableLanMessage
 		recMsg, _, err = o.readMsg(func(msg ReceivableLanMessage) bool {
@@ -329,7 +278,7 @@ func (o Connector) GetResponseFromAll(msg SendableLanMessage, filter Filter) (re
 			}
 			break
 		}
-		if device, err := o.findDevice(recMsg.Header.FrameAddress.Target); err == nil {
+		if device, err := o.findDevice(recMsg.Header.FrameAddress.Target, devices); err == nil {
 			recMsgs[device] = recMsg
 			n--
 		}
@@ -337,8 +286,46 @@ func (o Connector) GetResponseFromAll(msg SendableLanMessage, filter Filter) (re
 	return
 }
 
-func (o Connector) findDevice(mac uint64) (Device, error) {
-	for _, v := range o.Devices {
+// SendToAndGet sends the message to all devices on the network, filtering each
+// response and returning a mapping between the responding device and its
+// response.
+func (o *Connector) SendToAllAndGet(msg SendableLanMessage, filter Filter) (recMsgs map[Device]ReceivableLanMessage, err error) {
+	source := rand.Uint32()
+	msg.Header.Frame.Source = source
+	msg.Header.Frame.Tagged = false
+	if err = o.SendToAll(msg); err != nil {
+		return
+	}
+	recMsgs = make(map[Device]ReceivableLanMessage)
+
+	// Receiving responses from all devices requires a timeout.
+	readDeadline := o.getReadDeadlineIfApplicable()
+	if readDeadline.IsZero() {
+		readDeadline = time.Now().Add(NormalDiscoverTimeout*time.Millisecond)
+	}
+	o.conn.SetReadDeadline(readDeadline)
+
+	for {
+		msg, raddr, err := o.readMsg(func(msg ReceivableLanMessage) bool {
+			return checkSourceAndFilter(msg, source, filter)
+		})
+		if err != nil {
+			if err.(net.Error).Timeout() {
+				return recMsgs, nil
+			}
+			return recMsgs, err
+		}
+		device := Device{
+			Addr: raddr,
+			Mac: msg.Header.FrameAddress.Target,
+		}
+		recMsgs[device] = msg
+	}
+	return
+}
+
+func (o Connector) findDevice(mac uint64, devices []Device) (Device, error) {
+	for _, v := range devices {
 		if v.Mac == mac {
 			return v, nil
 		}
@@ -358,7 +345,6 @@ func TypeFilter(t encoding.BinaryUnmarshaler) Filter {
 
 func checkSourceAndFilter(msg ReceivableLanMessage, source uint32, filter Filter) bool {
 	sourceOk := msg.Header.Frame.Source == source
-
 	if filter != nil {
 		return sourceOk && filter(msg)
 	}

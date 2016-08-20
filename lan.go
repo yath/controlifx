@@ -180,18 +180,21 @@ type LanHeaderFrameAddress struct {
 func (o LanHeaderFrameAddress) MarshalBinary() (data []byte, _ error) {
 	data = make([]byte, 16)
 
-	// Big endian.
-	putUint48 := func(b []byte, v uint64) {
-		b[0] = byte(v >> 40)
-		b[1] = byte(v >> 32)
-		b[2] = byte(v >> 24)
-		b[3] = byte(v >> 16)
-		b[4] = byte(v >> 8)
-		b[5] = byte(v)
+	putUint48 := func (b []byte, v uint64) {
+		b[0] = byte(v)
+		b[1] = byte(v >> 8)
+		b[2] = byte(v >> 16)
+		b[3] = byte(v >> 24)
+		b[4] = byte(v >> 32)
+		b[5] = byte(v >> 40)
 	}
 
 	// Target.
-	putUint48(data[:6], o.Target)
+	if o.Target > 0xffffffffffff {
+		putUint48(data[:6], o.Target)
+	} else {
+		binary.LittleEndian.PutUint64(data[:8], o.Target)
+	}
 
 	// 0000 0000
 
@@ -214,12 +217,17 @@ func (o LanHeaderFrameAddress) MarshalBinary() (data []byte, _ error) {
 }
 
 func (o *LanHeaderFrameAddress) UnmarshalBinary(data []byte) error {
-	// Big endian.
 	uint48 := func(b []byte) uint64 {
-		return uint64(b[5]) | uint64(b[4])<<8 | uint64(b[3])<<16 | uint64(b[2])<<24 |
-			uint64(b[1])<<32 | uint64(b[0])<<40
+		return uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 |
+			uint64(b[4])<<32 | uint64(b[5])<<40
 	}
-	o.Target = uint48(data[:6])
+
+	// Target.
+	if data[7] | data[8] == 0 {
+		o.Target = uint48(data[:6])
+	} else {
+		o.Target = binary.LittleEndian.Uint64(data[:8])
+	}
 
 	// 0000 00??
 
