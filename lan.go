@@ -4,18 +4,19 @@ import (
 	"bytes"
 	"encoding"
 	"encoding/binary"
-	"errors"
 	"fmt"
 	"time"
 	"math"
 )
 
-// The maximum recommended number of messages to be sent to any one device every
-// second.
-const MessageRate = 20
+const (
+	// MessageRate is the maximum recommended number of messages a device should
+	// receive in a second.
+	MessageRate = 20
 
-// The LAN protocol header is always 36 bytes long.
-const LanHeaderSize = 36
+	// The LanHeaderSize is the size of the header for a LAN message in bytes.
+	LanHeaderSize = 36
+)
 
 type SendableLanMessage struct {
 	Header  LanHeader
@@ -69,9 +70,10 @@ func (o *ReceivableLanMessage) UnmarshalBinary(data []byte) error {
 	}
 
 	// Payload.
-	payload, err := NewReceivablePayloadOfType(o.Header.ProtocolHeader.Type)
-	if err != nil {
-		return err
+	payload, ok := receivableTypeToPayload[o.Header.ProtocolHeader.Type]
+	if !ok {
+		return fmt.Errorf("cannot create new payload of type %d; is it binary decodable?",
+			o.Header.ProtocolHeader.Type)
 	}
 
 	o.Payload = payload
@@ -180,6 +182,7 @@ type LanHeaderFrameAddress struct {
 func (o LanHeaderFrameAddress) MarshalBinary() (data []byte, _ error) {
 	data = make([]byte, 16)
 
+	// Little endian.
 	putUint48 := func (b []byte, v uint64) {
 		b[0] = byte(v)
 		b[1] = byte(v >> 8)
@@ -191,9 +194,9 @@ func (o LanHeaderFrameAddress) MarshalBinary() (data []byte, _ error) {
 
 	// Target.
 	if o.Target > 0xffffffffffff {
-		putUint48(data[:6], o.Target)
-	} else {
 		binary.LittleEndian.PutUint64(data[:8], o.Target)
+	} else {
+		putUint48(data[:6], o.Target)
 	}
 
 	// 0000 0000
@@ -217,6 +220,7 @@ func (o LanHeaderFrameAddress) MarshalBinary() (data []byte, _ error) {
 }
 
 func (o *LanHeaderFrameAddress) UnmarshalBinary(data []byte) error {
+	// Little endian.
 	uint48 := func(b []byte) uint64 {
 		return uint64(b[0]) | uint64(b[1])<<8 | uint64(b[2])<<16 | uint64(b[3])<<24 |
 			uint64(b[4])<<32 | uint64(b[5])<<40
@@ -232,10 +236,10 @@ func (o *LanHeaderFrameAddress) UnmarshalBinary(data []byte) error {
 	// 0000 00??
 
 	// AckRequired.
-	o.AckRequired = ((data[14] >> 1) & 0x01 == 1)
+	o.AckRequired = ((data[14]>>1)&0x01 == 1)
 
 	// ResRequired.
-	o.ResRequired = (data[14] & 0x01 == 1)
+	o.ResRequired = (data[14]&0x01 == 1)
 
 	// Sequence.
 	o.Sequence = byte(data[15])
@@ -273,7 +277,7 @@ func (o Label) MarshalBinary() (data []byte, err error) {
 		return
 	}
 
-	data = append([]byte(o), make([]byte, Size - len(o))...)
+	data = append([]byte(o), make([]byte, Size-len(o))...)
 
 	return
 }
@@ -323,94 +327,7 @@ func (o Time) MarshalBinary() (data []byte, _ error) {
 }
 
 const (
-	StateServiceType      = 3
-	StateHostInfoType     = 13
-	StateHostFirmwareType = 15
-	StateWifiInfoType     = 17
-	StateWifiFirmwareType = 19
-	StatePowerType        = 22
-	StateLabelType        = 25
-	StateVersionType      = 33
-	StateInfoType         = 35
-	AcknowledgementType   = 45
-	StateLocationType     = 50
-	StateGroupType        = 53
-	EchoResponseType      = 59
-	LightStateType        = 107
-	LightStatePowerType   = 118
-)
-
-func NewReceivablePayloadOfType(t uint16) (encoding.BinaryUnmarshaler, error) {
-	switch t {
-	case StateServiceType:
-		return &StateServiceLanMessage{}, nil
-	case StateHostInfoType:
-		return &StateHostInfoLanMessage{}, nil
-	case StateHostFirmwareType:
-		return &StateHostFirmwareLanMessage{}, nil
-	case StateWifiInfoType:
-		return &StateWifiInfoLanMessage{}, nil
-	case StateWifiFirmwareType:
-		return &StateWifiFirmwareLanMessage{}, nil
-	case StatePowerType:
-		return &StatePowerLanMessage{}, nil
-	case StateLabelType:
-		return &StateLabelLanMessage{}, nil
-	case StateVersionType:
-		return &StateVersionLanMessage{}, nil
-	case StateInfoType:
-		return &StateInfoLanMessage{}, nil
-	case AcknowledgementType:
-		return &AcknowledgementLanMessage{}, nil
-	case StateLocationType:
-		return &StateLocationLanMessage{}, nil
-	case StateGroupType:
-		return &StateGroupLanMessage{}, nil
-	case EchoResponseType:
-		return &EchoResponseLanMessage{}, nil
-	case LightStateType:
-		return &LightStatePowerLanMessage{}, nil
-	case LightStatePowerType:
-		return &LightStatePowerLanMessage{}, nil
-	default:
-		return nil, errors.New("cannot create new payload of type; is it binary encodable?")
-	}
-}
-
-type LanDeviceMessageBuilder struct {
-	source      uint32
-	target      uint64
-	AckRequired bool
-	ResRequired bool
-	Sequence    uint8
-}
-
-func (o LanDeviceMessageBuilder) Tagged() bool {
-	return o.target > 0
-}
-
-func (o LanDeviceMessageBuilder) buildNormalMessageOfType(t uint16) SendableLanMessage {
-	return SendableLanMessage{
-		Header:LanHeader{
-			Frame:LanHeaderFrame{
-				Size:LanHeaderSize,
-				Tagged:o.Tagged(),
-				Source:o.source,
-			},
-			FrameAddress:LanHeaderFrameAddress{
-				Target:o.target,
-				AckRequired:o.AckRequired,
-				ResRequired:o.ResRequired,
-				Sequence:o.Sequence,
-			},
-			ProtocolHeader:LanHeaderProtocolHeader{
-				Type:t,
-			},
-		},
-	}
-}
-
-const (
+	// Sendable types.
 	GetServiceType      = 2
 	GetHostInfoType     = 12
 	GetHostFirmwareType = 14
@@ -431,8 +348,55 @@ const (
 	LightSetPowerType   = 117
 )
 
-func (o LanDeviceMessageBuilder) GetService() SendableLanMessage {
-	return o.buildNormalMessageOfType(GetServiceType)
+const (
+	// Receivable types.
+	StateServiceType      = 3
+	StateHostInfoType     = 13
+	StateHostFirmwareType = 15
+	StateWifiInfoType     = 17
+	StateWifiFirmwareType = 19
+	StatePowerType        = 22
+	StateLabelType        = 25
+	StateVersionType      = 33
+	StateInfoType         = 35
+	AcknowledgementType   = 45
+	StateLocationType     = 50
+	StateGroupType        = 53
+	EchoResponseType      = 59
+	LightStateType        = 107
+	LightStatePowerType   = 118
+)
+
+var receivableTypeToPayload = map[uint16]encoding.BinaryUnmarshaler{
+	StateServiceType:      &StateServiceLanMessage{},
+	StateHostInfoType:     &StateHostInfoLanMessage{},
+	StateHostFirmwareType: &StateHostFirmwareLanMessage{},
+	StateWifiInfoType:     &StateWifiInfoLanMessage{},
+	StateWifiFirmwareType: &StateWifiFirmwareLanMessage{},
+	StatePowerType:        &StatePowerLanMessage{},
+	StateLabelType:        &StateLabelLanMessage{},
+	StateVersionType:      &StateVersionLanMessage{},
+	StateInfoType:         &StateInfoLanMessage{},
+	AcknowledgementType:   &AcknowledgementLanMessage{},
+	StateLocationType:     &StateLocationLanMessage{},
+	StateGroupType:        &StateGroupLanMessage{},
+	EchoResponseType:      &EchoResponseLanMessage{},
+	LightStateType:        &LightStatePowerLanMessage{},
+	LightStatePowerType:   &LightStatePowerLanMessage{},
+}
+
+func createSendableLanMessage(t uint16) SendableLanMessage {
+	return SendableLanMessage{
+		Header:LanHeader{
+			ProtocolHeader:LanHeaderProtocolHeader{
+				Type:t,
+			},
+		},
+	}
+}
+
+func GetService() SendableLanMessage {
+	return createSendableLanMessage(GetServiceType)
 }
 
 type StateServiceLanMessage struct {
@@ -450,8 +414,8 @@ func (o *StateServiceLanMessage) UnmarshalBinary(data []byte) error {
 	return nil
 }
 
-func (o LanDeviceMessageBuilder) GetHostInfo() SendableLanMessage {
-	return o.buildNormalMessageOfType(GetHostInfoType)
+func GetHostInfo() SendableLanMessage {
+	return createSendableLanMessage(GetHostInfoType)
 }
 
 type StateHostInfoLanMessage struct {
@@ -473,8 +437,8 @@ func (o *StateHostInfoLanMessage) UnmarshalBinary(data []byte) error {
 	return nil
 }
 
-func (o LanDeviceMessageBuilder) GetHostFirmware() SendableLanMessage {
-	return o.buildNormalMessageOfType(GetHostFirmwareType)
+func GetHostFirmware() SendableLanMessage {
+	return createSendableLanMessage(GetHostFirmwareType)
 }
 
 type StateHostFirmwareLanMessage struct {
@@ -492,8 +456,8 @@ func (o *StateHostFirmwareLanMessage) UnmarshalBinary(data []byte) error {
 	return nil
 }
 
-func (o LanDeviceMessageBuilder) GetWifiInfo() SendableLanMessage {
-	return o.buildNormalMessageOfType(GetWifiInfoType)
+func GetWifiInfo() SendableLanMessage {
+	return createSendableLanMessage(GetWifiInfoType)
 }
 
 type StateWifiInfoLanMessage struct {
@@ -515,8 +479,8 @@ func (o *StateWifiInfoLanMessage) UnmarshalBinary(data []byte) error {
 	return nil
 }
 
-func (o LanDeviceMessageBuilder) GetWifiFirmware() SendableLanMessage {
-	return o.buildNormalMessageOfType(GetWifiFirmwareType)
+func GetWifiFirmware() SendableLanMessage {
+	return createSendableLanMessage(GetWifiFirmwareType)
 }
 
 type StateWifiFirmwareLanMessage struct {
@@ -534,8 +498,8 @@ func (o *StateWifiFirmwareLanMessage) UnmarshalBinary(data []byte) error {
 	return nil
 }
 
-func (o LanDeviceMessageBuilder) GetPower() SendableLanMessage {
-	return o.buildNormalMessageOfType(GetPowerType)
+func GetPower() SendableLanMessage {
+	return createSendableLanMessage(GetPowerType)
 }
 
 type SetPowerLanMessage struct {
@@ -546,10 +510,10 @@ func (o SetPowerLanMessage) MarshalBinary() ([]byte, error) {
 	return o.Level.MarshalBinary()
 }
 
-func (o LanDeviceMessageBuilder) SetPower(payload SetPowerLanMessage) SendableLanMessage {
-	msg := o.buildNormalMessageOfType(SetPowerType)
-
+func SetPower(payload SetPowerLanMessage) SendableLanMessage {
+	msg := createSendableLanMessage(SetPowerType)
 	msg.Payload = payload
+
 	msg.updateSize()
 
 	return msg
@@ -565,8 +529,8 @@ func (o *StatePowerLanMessage) UnmarshalBinary(data []byte) error {
 	return nil
 }
 
-func (o LanDeviceMessageBuilder) GetLabel() SendableLanMessage {
-	return o.buildNormalMessageOfType(GetLabelType)
+func GetLabel() SendableLanMessage {
+	return createSendableLanMessage(GetLabelType)
 }
 
 type SetLabelLanMessage struct {
@@ -577,11 +541,13 @@ func (o SetLabelLanMessage) MarshalBinary() ([]byte, error) {
 	return o.Label.MarshalBinary()
 }
 
-func (o LanDeviceMessageBuilder) SetLabel(payload SetLabelLanMessage) SendableLanMessage {
-	msg := o.buildNormalMessageOfType(SetLabelType)
-
+func SetLabel(payload SetLabelLanMessage) SendableLanMessage {
+	msg := createSendableLanMessage(SetLabelType)
 	msg.Payload = payload
+
 	msg.updateSize()
+
+	return msg
 
 	return msg
 }
@@ -596,8 +562,8 @@ func (o *StateLabelLanMessage) UnmarshalBinary(data []byte) error {
 	return nil
 }
 
-func (o LanDeviceMessageBuilder) GetVersion() SendableLanMessage {
-	return o.buildNormalMessageOfType(GetVersionType)
+func GetVersion() SendableLanMessage {
+	return createSendableLanMessage(GetVersionType)
 }
 
 type StateVersionLanMessage struct {
@@ -619,8 +585,8 @@ func (o *StateVersionLanMessage) UnmarshalBinary(data []byte) error {
 	return nil
 }
 
-func (o LanDeviceMessageBuilder) GetInfo() SendableLanMessage {
-	return o.buildNormalMessageOfType(GetInfoType)
+func GetInfo() SendableLanMessage {
+	return createSendableLanMessage(GetInfoType)
 }
 
 type StateInfoLanMessage struct {
@@ -648,8 +614,8 @@ func (o *AcknowledgementLanMessage) UnmarshalBinary(data []byte) error {
 	return nil
 }
 
-func (o LanDeviceMessageBuilder) GetLocation() SendableLanMessage {
-	return o.buildNormalMessageOfType(GetLocationType)
+func GetLocation() SendableLanMessage {
+	return createSendableLanMessage(GetLocationType)
 }
 
 type StateLocationLanMessage struct {
@@ -671,8 +637,8 @@ func (o *StateLocationLanMessage) UnmarshalBinary(data []byte) error {
 	return nil
 }
 
-func (o LanDeviceMessageBuilder) GetGroup() SendableLanMessage {
-	return o.buildNormalMessageOfType(GetGroupType)
+func GetGroup() SendableLanMessage {
+	return createSendableLanMessage(GetGroupType)
 }
 
 type StateGroupLanMessage struct {
@@ -702,10 +668,10 @@ func (o EchoRequestLanMessage) MarshalBinary() ([]byte, error) {
 	return o.Payload[:], nil
 }
 
-func (o LanDeviceMessageBuilder) EchoRequest(payload EchoRequestLanMessage) SendableLanMessage {
-	msg := o.buildNormalMessageOfType(EchoRequestType)
-
+func EchoRequest(payload EchoRequestLanMessage) SendableLanMessage {
+	msg := createSendableLanMessage(EchoRequestType)
 	msg.Payload = payload
+
 	msg.updateSize()
 
 	return msg
@@ -766,8 +732,8 @@ func (o *HSBK) UnmarshalBinary(data []byte) error {
 	return nil
 }
 
-func (o LanDeviceMessageBuilder) LightGet() SendableLanMessage {
-	return o.buildNormalMessageOfType(LightGetType)
+func LightGet() SendableLanMessage {
+	return createSendableLanMessage(LightGetType)
 }
 
 type LightSetColorLanMessage struct {
@@ -792,10 +758,10 @@ func (o LightSetColorLanMessage) MarshalBinary() (data []byte, err error) {
 	return
 }
 
-func (o LanDeviceMessageBuilder) LightSetColor(payload LightSetColorLanMessage) SendableLanMessage {
-	msg := o.buildNormalMessageOfType(LightSetColorType)
-
+func LightSetColor(payload LightSetColorLanMessage) SendableLanMessage {
+	msg := createSendableLanMessage(LightSetColorType)
 	msg.Payload = payload
+
 	msg.updateSize()
 
 	return msg
@@ -823,8 +789,8 @@ func (o *LightStateLanMessage) UnmarshalBinary(data []byte) error {
 	return nil
 }
 
-func (o LanDeviceMessageBuilder) LightGetPower() SendableLanMessage {
-	return o.buildNormalMessageOfType(LightGetPowerType)
+func LightGetPower() SendableLanMessage {
+	return createSendableLanMessage(LightGetPowerType)
 }
 
 type LightSetPowerLanMessage struct {
@@ -849,10 +815,10 @@ func (o LightSetPowerLanMessage) MarshalBinary() (data []byte, err error) {
 	return
 }
 
-func (o LanDeviceMessageBuilder) LightSetPower(payload LightSetPowerLanMessage) SendableLanMessage {
-	msg := o.buildNormalMessageOfType(LightSetPowerType)
-
+func LightSetPower(payload LightSetPowerLanMessage) SendableLanMessage {
+	msg := createSendableLanMessage(LightSetPowerType)
 	msg.Payload = payload
+
 	msg.updateSize()
 
 	return msg
