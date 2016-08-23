@@ -148,7 +148,13 @@ func (o Connection) DiscoverAllDevices(timeout int) ([]Device, error) {
 
 // SendTo sends the message to the devices without expecting responses.
 func (o Connection) SendTo(msg SendableLanMessage, devices []Device) error {
-	msg.Header.Frame.Tagged = true
+	// Possible bug in LIFX protocol. Workaround here:
+	switch msg.Header.ProtocolHeader.Type {
+	case SetPowerType:
+	case LightSetPowerType:
+	default:
+		msg.Header.Frame.Tagged = true
+	}
 
 	for _, d := range devices {
 		msg.Header.FrameAddress.Target = d.Mac
