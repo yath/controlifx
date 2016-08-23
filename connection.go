@@ -10,7 +10,8 @@ const (
 	// NormalTimeout is a sane number of milliseconds to wait before timing out during discovery.
 	NormalTimeout = 250
 
-	maxReadSize = LanHeaderSize+64
+	maxReadSize    = LanHeaderSize+64
+	defaultPortStr = "56700"
 )
 
 type (
@@ -36,10 +37,17 @@ type (
 	}
 )
 
-func Connect() (o Connection, err error) {
-	const PortStr = "56700"
+func Connect() (_ Connection, err error) {
+	bcastAddr, err := net.ResolveUDPAddr("udp", net.JoinHostPort(net.IPv4bcast.String(), defaultPortStr));
+	if err != nil {
+		return
+	}
 
-	laddr, err := net.ResolveUDPAddr("udp", net.JoinHostPort(net.IPv4zero.String(), PortStr))
+	return ManualConnect(bcastAddr)
+}
+
+func ManualConnect(bcastAddr *net.UDPAddr) (o Connection, err error) {
+	laddr, err := net.ResolveUDPAddr("udp", net.JoinHostPort(net.IPv4zero.String(), defaultPortStr))
 	if err != nil {
 		return
 	}
@@ -48,7 +56,7 @@ func Connect() (o Connection, err error) {
 		return
 	}
 
-	o.bcastAddr, err = net.ResolveUDPAddr("udp", net.JoinHostPort(net.IPv4bcast.String(), PortStr));
+	o.bcastAddr = bcastAddr
 
 	return
 }
