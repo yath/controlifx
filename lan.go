@@ -70,10 +70,9 @@ func (o *ReceivableLanMessage) UnmarshalBinary(data []byte) error {
 	}
 
 	// Payload.
-	payload, ok := receivableTypeToPayload[o.Header.ProtocolHeader.Type]
-	if !ok {
-		return fmt.Errorf("cannot create new payload of type %d; is it binary decodable?",
-			o.Header.ProtocolHeader.Type)
+	payload, err := getReceivablePayloadOfType(o.Header.ProtocolHeader.Type)
+	if err != nil {
+		return err
 	}
 
 	o.Payload = payload
@@ -367,22 +366,45 @@ const (
 	LightStatePowerType   = 118
 )
 
-var receivableTypeToPayload = map[uint16]encoding.BinaryUnmarshaler{
-	StateServiceType:      &StateServiceLanMessage{},
-	StateHostInfoType:     &StateHostInfoLanMessage{},
-	StateHostFirmwareType: &StateHostFirmwareLanMessage{},
-	StateWifiInfoType:     &StateWifiInfoLanMessage{},
-	StateWifiFirmwareType: &StateWifiFirmwareLanMessage{},
-	StatePowerType:        &StatePowerLanMessage{},
-	StateLabelType:        &StateLabelLanMessage{},
-	StateVersionType:      &StateVersionLanMessage{},
-	StateInfoType:         &StateInfoLanMessage{},
-	AcknowledgementType:   &AcknowledgementLanMessage{},
-	StateLocationType:     &StateLocationLanMessage{},
-	StateGroupType:        &StateGroupLanMessage{},
-	EchoResponseType:      &EchoResponseLanMessage{},
-	LightStateType:        &LightStatePowerLanMessage{},
-	LightStatePowerType:   &LightStatePowerLanMessage{},
+func getReceivablePayloadOfType(t uint16) (encoding.BinaryUnmarshaler, error) {
+	var payload encoding.BinaryUnmarshaler
+	
+	switch t {
+	case StateServiceType:
+		payload = &StateServiceLanMessage{}
+	case StateHostInfoType:
+		payload = &StateHostInfoLanMessage{}
+	case StateHostFirmwareType:
+		payload = &StateHostFirmwareLanMessage{}
+	case StateWifiInfoType:
+		payload = &StateWifiInfoLanMessage{}
+	case StateWifiFirmwareType:
+		payload = &StateWifiFirmwareLanMessage{}
+	case StatePowerType:
+		payload = &StatePowerLanMessage{}
+	case StateLabelType:
+		payload = &StateLabelLanMessage{}
+	case StateVersionType:
+		payload = &StateVersionLanMessage{}
+	case StateInfoType:
+		payload = &StateInfoLanMessage{}
+	case AcknowledgementType:
+		payload = &AcknowledgementLanMessage{}
+	case StateLocationType:
+		payload = &StateLocationLanMessage{}
+	case StateGroupType:
+		payload = &StateGroupLanMessage{}
+	case EchoResponseType:
+		payload = &EchoResponseLanMessage{}
+	case LightStateType:
+		payload = &LightStateLanMessage{}
+	case LightStatePowerType:
+		payload = &LightStatePowerLanMessage{}
+	default:
+		return nil, fmt.Errorf("cannot create new payload of type %d; is it binary decodable?", t)
+	}
+
+	return payload, nil
 }
 
 func createSendableLanMessage(t uint16) SendableLanMessage {
@@ -396,7 +418,11 @@ func createSendableLanMessage(t uint16) SendableLanMessage {
 }
 
 func GetService() SendableLanMessage {
-	return createSendableLanMessage(GetServiceType)
+	msg := createSendableLanMessage(GetServiceType)
+	// Required as per the protocol.
+	msg.Header.Frame.Tagged = true
+
+	return msg
 }
 
 type StateServiceLanMessage struct {
@@ -781,10 +807,10 @@ func (o *LightStateLanMessage) UnmarshalBinary(data []byte) error {
 	}
 
 	// Power.
-	o.Power = PowerLevel(binary.LittleEndian.Uint16(data[8:10]))
+	o.Power = PowerLevel(binary.LittleEndian.Uint16(data[10:12]))
 
 	// Label.
-	o.Label = Label(bytes.TrimRight(data[10:], "\x00"))
+	o.Label = Label(bytes.TrimRight(data[12:], "\x00"))
 
 	return nil
 }
