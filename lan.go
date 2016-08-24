@@ -271,12 +271,14 @@ type Label string
 func (o Label) MarshalBinary() (data []byte, err error) {
 	const Size = 32
 
+	data = make([]byte, Size)
+
 	if len(o) > Size {
 		err = fmt.Errorf("label '%s' has length %d > %d", o, len(o), Size)
 		return
 	}
 
-	data = append([]byte(o), make([]byte, Size-len(o))...)
+	copy(data, []byte(o))
 
 	return
 }
@@ -301,9 +303,13 @@ func (o PowerLevel) MarshalBinary() (data []byte, err error) {
 
 	data = make([]byte, 2)
 
-	binary.LittleEndian.PutUint16(data[:], uint16(o))
+	binary.LittleEndian.PutUint16(data, uint16(o))
 
 	return
+}
+
+func (o PowerLevel) On() bool {
+	return uint16(o) == 0xffff
 }
 
 type Time uint64
@@ -550,7 +556,7 @@ type StatePowerLanMessage struct {
 }
 
 func (o *StatePowerLanMessage) UnmarshalBinary(data []byte) error {
-	o.Level = PowerLevel(binary.LittleEndian.Uint16(data))
+	o.Level = PowerLevel(binary.LittleEndian.Uint16(data[:2]))
 
 	return nil
 }
@@ -773,7 +779,6 @@ func (o LightSetColorLanMessage) MarshalBinary() (data []byte, err error) {
 	if err != nil {
 		return
 	}
-
 	copy(data[1:9], color)
 
 	// Duration.
@@ -830,7 +835,6 @@ func (o LightSetPowerLanMessage) MarshalBinary() (data []byte, err error) {
 	if err != nil {
 		return
 	}
-
 	copy(data[:2], level)
 
 	// Duration.

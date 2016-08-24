@@ -182,7 +182,6 @@ func (o Connection) SendToAll(msg SendableLanMessage) error {
 // device and its response.
 func (o Connection) SendToAndGet(msg SendableLanMessage, devices []Device, filter Filter) (recMsgs map[Device]ReceivableLanMessage, err error) {
 	msg.Header.Frame.Source = rand.Uint32()
-	msg.Header.FrameAddress.ResRequired = true
 
 	if err = o.SendToAll(msg); err != nil {
 		return
@@ -218,7 +217,6 @@ func (o Connection) SendToAndGet(msg SendableLanMessage, devices []Device, filte
 // a responding device and its response.
 func (o Connection) SendToAllAndGet(timeout int, msg SendableLanMessage, filter Filter) (recMsgs map[Device]ReceivableLanMessage, err error) {
 	msg.Header.Frame.Source = rand.Uint32()
-	msg.Header.FrameAddress.ResRequired = true
 
 	if err = o.SendToAll(msg); err != nil {
 		return
