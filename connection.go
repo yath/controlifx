@@ -183,7 +183,7 @@ func (o Connection) SendToAll(msg SendableLanMessage) error {
 func (o Connection) SendToAndGet(msg SendableLanMessage, devices []Device, filter Filter) (recMsgs map[Device]ReceivableLanMessage, err error) {
 	msg.Header.Frame.Source = rand.Uint32()
 
-	if err = o.SendToAll(msg); err != nil {
+	if err = o.SendTo(msg, devices); err != nil {
 		return
 	}
 
