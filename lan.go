@@ -574,8 +574,6 @@ func SetLabel(payload SetLabelLanMessage) SendableLanMessage {
 	msg.updateSize()
 
 	return msg
-
-	return msg
 }
 
 type StateLabelLanMessage struct {
