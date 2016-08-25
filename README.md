@@ -34,7 +34,7 @@ Now we need to send the message and wait for responses. `SendToAllAndGet(...)` w
 Finally, the `TypeFilter(...)` will assure that we only process messages that have the type we're expecting, since other clients on the network may cause devices to emit other types of responses. This assures we don't try to process a message telling us information about its version when we just wanted to know its label.
 ```go
 recMsgs, err := conn.SendToAllAndGet(controlifx.NormalTimeout, msg,
-		controlifx.TypeFilter(controlifx.StateLabelType))
+	controlifx.TypeFilter(controlifx.StateLabelType))
 if err != nil {
 	log.Fatalln(err)
 }
