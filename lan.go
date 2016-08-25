@@ -5,7 +5,6 @@ import (
 	"encoding"
 	"encoding/binary"
 	"fmt"
-	"time"
 	"math"
 )
 
@@ -163,7 +162,7 @@ func (o *LanHeaderFrame) UnmarshalBinary(data []byte) error {
 	o.Size = binary.LittleEndian.Uint16(data[:2])
 
 	// Tagged.
-	o.Tagged = (data[3] >> 5) & 0x1 == 1
+	o.Tagged = (data[3]>>5)&1 == 1
 
 	// Source.
 	o.Source = binary.LittleEndian.Uint32(data[4:])
@@ -184,11 +183,11 @@ func (o LanHeaderFrameAddress) MarshalBinary() (data []byte, _ error) {
 	// Little endian.
 	putUint48 := func (b []byte, v uint64) {
 		b[0] = byte(v)
-		b[1] = byte(v >> 8)
-		b[2] = byte(v >> 16)
-		b[3] = byte(v >> 24)
-		b[4] = byte(v >> 32)
-		b[5] = byte(v >> 40)
+		b[1] = byte(v>>8)
+		b[2] = byte(v>>16)
+		b[3] = byte(v>>24)
+		b[4] = byte(v>>32)
+		b[5] = byte(v>>40)
 	}
 
 	// Target.
@@ -264,71 +263,6 @@ func (o *LanHeaderProtocolHeader) UnmarshalBinary(data []byte) error {
 	o.Type = binary.LittleEndian.Uint16(data[8:10])
 
 	return nil
-}
-
-type Label string
-
-func (o Label) MarshalBinary() (data []byte, err error) {
-	const Size = 32
-
-	data = make([]byte, Size)
-
-	if len(o) > Size {
-		err = fmt.Errorf("label '%s' has length %d > %d", o, len(o), Size)
-		return
-	}
-
-	copy(data, []byte(o))
-
-	return
-}
-
-type Port uint32
-
-func (o Port) MarshalBinary() (data []byte, _ error) {
-	data = make([]byte, 4)
-
-	binary.LittleEndian.PutUint32(data, uint32(o))
-
-	return
-}
-
-type PowerLevel uint16
-
-func (o PowerLevel) MarshalBinary() (data []byte, err error) {
-	if o != 0 && o != 65535 {
-		err = fmt.Errorf("level %d is not 0 or 65535", o)
-		return
-	}
-
-	data = make([]byte, 2)
-
-	binary.LittleEndian.PutUint16(data, uint16(o))
-
-	return
-}
-
-func (o PowerLevel) On() bool {
-	return uint16(o) == 0xffff
-}
-
-type Time uint64
-
-func (o Time) Time() (time.Time, error) {
-	// Check if value is over the max int64 size.
-	if o > math.MaxInt64 {
-		return time.Time{}, fmt.Errorf("time %d exceeds int64 max value", o)
-	}
-
-	return time.Unix(0, int64(o)), nil
-}
-
-func (o Time) MarshalBinary() (data []byte, _ error) {
-	data = make([]byte, 8)
-
-	binary.LittleEndian.PutUint64(data, uint64(o))
-
-	return
 }
 
 const (
@@ -560,11 +494,16 @@ func GetPower() SendableLanMessage {
 }
 
 type SetPowerLanMessage struct {
-	Level PowerLevel
+	Level uint16
 }
 
-func (o SetPowerLanMessage) MarshalBinary() ([]byte, error) {
-	return o.Level.MarshalBinary()
+func (o SetPowerLanMessage) MarshalBinary() (data []byte, _ error) {
+	data = make([]byte, 2)
+
+	// Level.
+	binary.LittleEndian.PutUint16(data, o.Level)
+
+	return
 }
 
 func SetPower(payload SetPowerLanMessage) SendableLanMessage {
@@ -577,11 +516,12 @@ func SetPower(payload SetPowerLanMessage) SendableLanMessage {
 }
 
 type StatePowerLanMessage struct {
-	Level PowerLevel
+	Level uint16
 }
 
 func (o *StatePowerLanMessage) UnmarshalBinary(data []byte) error {
-	o.Level = PowerLevel(binary.LittleEndian.Uint16(data[:2]))
+	// Level.
+	o.Level = uint16(binary.LittleEndian.Uint16(data[:2]))
 
 	return nil
 }
@@ -591,11 +531,16 @@ func GetLabel() SendableLanMessage {
 }
 
 type SetLabelLanMessage struct {
-	Label Label
+	Label string
 }
 
-func (o SetLabelLanMessage) MarshalBinary() ([]byte, error) {
-	return o.Label.MarshalBinary()
+func (o SetLabelLanMessage) MarshalBinary() (data []byte, _ error) {
+	data = make([]byte, 32)
+
+	// Label.
+	copy(data, o.Label)
+
+	return
 }
 
 func SetLabel(payload SetLabelLanMessage) SendableLanMessage {
@@ -608,11 +553,12 @@ func SetLabel(payload SetLabelLanMessage) SendableLanMessage {
 }
 
 type StateLabelLanMessage struct {
-	Label Label
+	Label string
 }
 
 func (o *StateLabelLanMessage) UnmarshalBinary(data []byte) error {
-	o.Label = Label(bytes.TrimRight(data, "\x00"))
+	// Label.
+	o.Label = BToStr(data)
 
 	return nil
 }
@@ -645,14 +591,14 @@ func GetInfo() SendableLanMessage {
 }
 
 type StateInfoLanMessage struct {
-	Time     Time
+	Time     uint64
 	Uptime   uint64
 	Downtime uint64
 }
 
 func (o *StateInfoLanMessage) UnmarshalBinary(data []byte) error {
 	// Time.
-	o.Time = Time(binary.LittleEndian.Uint64(data[:8]))
+	o.Time = binary.LittleEndian.Uint64(data[:8])
 
 	// Uptime.
 	o.Uptime = binary.LittleEndian.Uint64(data[8:16])
@@ -675,8 +621,8 @@ func GetLocation() SendableLanMessage {
 
 type StateLocationLanMessage struct {
 	Location  [16]byte
-	Label     Label
-	UpdatedAt Time
+	Label     string
+	UpdatedAt uint64
 }
 
 func (o *StateLocationLanMessage) UnmarshalBinary(data []byte) error {
@@ -684,10 +630,10 @@ func (o *StateLocationLanMessage) UnmarshalBinary(data []byte) error {
 	copy(o.Location[:], data[:16])
 
 	// Label.
-	o.Label = Label(bytes.TrimRight(data[16:48], "\x00"))
+	o.Label = BToStr(data[16:48])
 
 	// Updated at.
-	o.UpdatedAt = Time(binary.LittleEndian.Uint64(data[48:]))
+	o.UpdatedAt = binary.LittleEndian.Uint64(data[48:])
 
 	return nil
 }
@@ -698,8 +644,8 @@ func GetGroup() SendableLanMessage {
 
 type StateGroupLanMessage struct {
 	Group     [16]byte
-	Label     Label
-	UpdatedAt Time
+	Label     string
+	UpdatedAt uint64
 }
 
 func (o *StateGroupLanMessage) UnmarshalBinary(data []byte) error {
@@ -707,10 +653,10 @@ func (o *StateGroupLanMessage) UnmarshalBinary(data []byte) error {
 	copy(o.Group[:], data[:16])
 
 	// Label.
-	o.Label = Label(bytes.TrimRight(data[16:48], "\x00"))
+	o.Label = BToStr(data[16:48])
 
 	// Updated at.
-	o.UpdatedAt = Time(binary.LittleEndian.Uint64(data[48:]))
+	o.UpdatedAt = binary.LittleEndian.Uint64(data[48:])
 
 	return nil
 }
@@ -720,6 +666,7 @@ type EchoRequestLanMessage struct {
 }
 
 func (o EchoRequestLanMessage) MarshalBinary() ([]byte, error) {
+	// Payload.
 	return o.Payload[:], nil
 }
 
@@ -737,6 +684,7 @@ type EchoResponseLanMessage struct {
 }
 
 func (o *EchoResponseLanMessage) UnmarshalBinary(data []byte) error {
+	// Payload.
 	copy(o.Payload[:], data[:64])
 
 	return nil
@@ -823,8 +771,8 @@ func LightSetColor(payload LightSetColorLanMessage) SendableLanMessage {
 
 type LightStateLanMessage struct {
 	Color HSBK
-	Power PowerLevel
-	Label Label
+	Power uint16
+	Label string
 }
 
 func (o *LightStateLanMessage) UnmarshalBinary(data []byte) error {
@@ -835,10 +783,10 @@ func (o *LightStateLanMessage) UnmarshalBinary(data []byte) error {
 	}
 
 	// Power.
-	o.Power = PowerLevel(binary.LittleEndian.Uint16(data[10:12]))
+	o.Power = uint16(binary.LittleEndian.Uint16(data[10:12]))
 
 	// Label.
-	o.Label = Label(bytes.TrimRight(data[12:], "\x00"))
+	o.Label = BToStr(data[12:])
 
 	return nil
 }
@@ -848,19 +796,15 @@ func LightGetPower() SendableLanMessage {
 }
 
 type LightSetPowerLanMessage struct {
-	Level    PowerLevel
+	Level    uint16
 	Duration uint32
 }
 
-func (o LightSetPowerLanMessage) MarshalBinary() (data []byte, err error) {
+func (o LightSetPowerLanMessage) MarshalBinary() (data []byte, _ error) {
 	data = make([]byte, 6)
 
 	// Level.
-	level, err := o.Level.MarshalBinary()
-	if err != nil {
-		return
-	}
-	copy(data[:2], level)
+	binary.LittleEndian.PutUint16(data[:2], o.Level)
 
 	// Duration.
 	binary.LittleEndian.PutUint32(data[2:], o.Duration)
@@ -878,11 +822,16 @@ func LightSetPower(payload LightSetPowerLanMessage) SendableLanMessage {
 }
 
 type LightStatePowerLanMessage struct {
-	Level PowerLevel
+	Level uint16
 }
 
 func (o *LightStatePowerLanMessage) UnmarshalBinary(data []byte) error {
-	o.Level = PowerLevel(binary.LittleEndian.Uint16(data))
+	// Level.
+	o.Level = uint16(binary.LittleEndian.Uint16(data))
 
 	return nil
+}
+
+func BToStr(b []byte) string {
+	return string(bytes.TrimRight(b, "\x00"))
 }
