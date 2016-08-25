@@ -370,8 +370,31 @@ const (
 	LightStatePowerType   = 118
 
 	// Misc.
-
 	UdpService = 1
+
+	Original1000VendorId      = 1
+	Color650VendorId          = 1
+	White800LowVVendorId      = 1
+	White800HighVVendorId     = 1
+	White900Br30LowVVendorId  = 1
+	Color1000Br30VendorId     = 1
+	Color1000VendorId         = 1
+
+	Original1000ProductId     = 1
+	Color650ProductId         = 3
+	White800LowVProductId     = 10
+	White800HighVProductId    = 11
+	White900Br30LowVProductId = 18
+	Color1000Br30ProductId    = 20
+	Color1000ProductId        = 22
+
+	Original1000Color         = true
+	Color650Color             = true
+	White800LowVColor         = false
+	White800HighVColor        = false
+	White900Br30LowVColor     = false
+	Color1000Br30Color        = true
+	Color1000Color            = true
 )
 
 func getReceivablePayloadOfType(t uint16) (encoding.BinaryUnmarshaler, error) {
