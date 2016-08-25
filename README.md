@@ -16,7 +16,7 @@ Client side API for LIFX device control.
   - [Changing colors](#changing-colors) &ndash; change the color of the bulbs
 
 ## Installation
-Just run `go get -u gopkg.in/bionicrm/controlifx.v1` to get the latest version.
+Just run `go get -u gopkg.in/golifx/controlifx.v1` to get the latest version.
 
 ## Getting Started
 You'll always start off by opening up a UDP socket for sending and receiving messages:
