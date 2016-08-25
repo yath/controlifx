@@ -127,7 +127,7 @@ func main() {
 			Hue:0xffff/2,
 			Saturation:0xffff,
 			Brightness:0xffff,
-			// 
+			// Kelvin is the color temperature in the range 2500..9000.
 			Kelvin:3500,
 		},
 		// Duration is the time in milliseconds of the color transition.
