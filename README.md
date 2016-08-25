@@ -13,7 +13,7 @@ Client side API for LIFX device control.
 - [Installation](#installation)
 - [Getting Started](#getting-started)
 - [Examples](#examples)
-  - [Changing colors](#set-color) &ndash; change the color of the bulbs
+  - [Changing colors](#changing-colors) &ndash; change the color of the bulbs
 
 ## Installation
 Just run `go get -u gopkg.in/bionicrm/controlifx.v1` to get the latest version.
