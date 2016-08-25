@@ -116,7 +116,7 @@ func (o Connection) DiscoverDevices(timeout int, filter DiscoverFilter) (devices
 			payload, ok := recMsg.Payload.(*StateServiceLanMessage)
 
 			return recMsg.Header.Frame.Source == getServiceMsg.Header.Frame.Source &&
-				ok && payload.Service == 1
+				ok && payload.Service == UdpService
 		})
 		if err != nil {
 			if err.(net.Error).Timeout() {
