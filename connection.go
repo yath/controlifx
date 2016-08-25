@@ -11,6 +11,7 @@ const (
 	NormalTimeout = 250
 
 	MaxReadSize    = LanHeaderSize+64
+	DefaultPort    = 56700
 	DefaultPortStr = "56700"
 )
 
@@ -72,7 +73,7 @@ func (o Connection) send(addr *net.UDPAddr, msg SendableLanMessage) error {
 	return err
 }
 
-func (o Connection) readMsg(filter Filter) (msg ReceivableLanMessage, raddr *net.UDPAddr, err error) {
+func (o Connection) receive(filter Filter) (msg ReceivableLanMessage, raddr *net.UDPAddr, err error) {
 	for {
 		b := make([]byte, MaxReadSize)
 		var n int
@@ -111,7 +112,7 @@ func (o Connection) DiscoverDevices(timeout int, filter DiscoverFilter) (devices
 	o.conn.SetReadDeadline(time.Now().Add(time.Duration(timeout)*time.Millisecond))
 
 	for {
-		recMsg, raddr, err := o.readMsg(func(recMsg ReceivableLanMessage) bool {
+		recMsg, raddr, err := o.receive(func(recMsg ReceivableLanMessage) bool {
 			payload, ok := recMsg.Payload.(*StateServiceLanMessage)
 
 			return recMsg.Header.Frame.Source == getServiceMsg.Header.Frame.Source &&
@@ -190,7 +191,7 @@ func (o Connection) SendToAndGet(msg SendableLanMessage, devices []Device, filte
 	recMsgs = make(map[Device]ReceivableLanMessage)
 
 	for len(devices) > 0 {
-		recMsg, _, err := o.readMsg(func(recMsg ReceivableLanMessage) bool {
+		recMsg, _, err := o.receive(func(recMsg ReceivableLanMessage) bool {
 			return checkSourceAndFilter(recMsg, msg.Header.Frame.Source, filter)
 		})
 		if err != nil {
@@ -227,7 +228,7 @@ func (o Connection) SendToAllAndGet(timeout int, msg SendableLanMessage, filter 
 	recMsgs = make(map[Device]ReceivableLanMessage)
 
 	for {
-		recMsg, raddr, err := o.readMsg(func(recMsg ReceivableLanMessage) bool {
+		recMsg, raddr, err := o.receive(func(recMsg ReceivableLanMessage) bool {
 			return checkSourceAndFilter(recMsg, msg.Header.Frame.Source, filter)
 		})
 		if err != nil {
