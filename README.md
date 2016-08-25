@@ -2,9 +2,9 @@
 Client side API for LIFX device control.
 
 **Projects built with Controlifx:**
-- [clifx](https://github.com/golifx/clifx) &ndash; command-line interface for LIFX device control
-- [emulifx](https://github.com/golifx/emulifx) &ndash; LIFX device emulator
-- [implifx](https://github.com/golifx/implifx) &ndash; server side API for LIFX device implementations
+- [Clifx](https://github.com/golifx/clifx) &ndash; command-line interface for LIFX device control
+- [Emulifx](https://github.com/golifx/emulifx) &ndash; LIFX device emulator
+- [Implifx](https://github.com/golifx/implifx) &ndash; server side API for LIFX device implementations
 
 **Resources:**
 - [LIFX LAN protocol](https://lan.developer.lifx.com/)
