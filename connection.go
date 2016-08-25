@@ -10,8 +10,8 @@ const (
 	// NormalTimeout is a sane number of milliseconds to wait before timing out during discovery.
 	NormalTimeout = 250
 
-	maxReadSize    = LanHeaderSize+64
-	defaultPortStr = "56700"
+	MaxReadSize    = LanHeaderSize+64
+	DefaultPortStr = "56700"
 )
 
 type (
@@ -38,7 +38,7 @@ type (
 )
 
 func Connect() (_ Connection, err error) {
-	bcastAddr, err := net.ResolveUDPAddr("udp", net.JoinHostPort(net.IPv4bcast.String(), defaultPortStr));
+	bcastAddr, err := net.ResolveUDPAddr("udp", net.JoinHostPort(net.IPv4bcast.String(), DefaultPortStr));
 	if err != nil {
 		return
 	}
@@ -47,7 +47,7 @@ func Connect() (_ Connection, err error) {
 }
 
 func ManualConnect(bcastAddr *net.UDPAddr) (o Connection, err error) {
-	laddr, err := net.ResolveUDPAddr("udp", net.JoinHostPort(net.IPv4zero.String(), defaultPortStr))
+	laddr, err := net.ResolveUDPAddr("udp", net.JoinHostPort(net.IPv4zero.String(), DefaultPortStr))
 	if err != nil {
 		return
 	}
@@ -74,7 +74,7 @@ func (o Connection) send(addr *net.UDPAddr, msg SendableLanMessage) error {
 
 func (o Connection) readMsg(filter Filter) (msg ReceivableLanMessage, raddr *net.UDPAddr, err error) {
 	for {
-		b := make([]byte, maxReadSize)
+		b := make([]byte, MaxReadSize)
 		var n int
 		n, raddr, err = o.conn.ReadFromUDP(b)
 		if err != nil {
