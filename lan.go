@@ -351,9 +351,7 @@ const (
 	LightSetColorType   = 102
 	LightGetPowerType   = 116
 	LightSetPowerType   = 117
-)
 
-const (
 	// Receivable types.
 	StateServiceType      = 3
 	StateHostInfoType     = 13
@@ -370,6 +368,10 @@ const (
 	EchoResponseType      = 59
 	LightStateType        = 107
 	LightStatePowerType   = 118
+
+	// Misc.
+
+	UdpService = 1
 )
 
 func getReceivablePayloadOfType(t uint16) (encoding.BinaryUnmarshaler, error) {
