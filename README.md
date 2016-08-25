@@ -13,10 +13,10 @@ Client side API for LIFX device control.
 - [Installation](#installation)
 - [Getting Started](#getting-started)
 
-### Installation
+## Installation
 Just run `go get -u gopkg.in/bionicrm/controlifx.v1` to get the latest version.
 
-### Getting Started
+## Getting Started
 You'll always start off by opening up a UDP socket for sending and receiving messages:
 ```go
 conn, err := controlifx.Connect()
@@ -48,7 +48,7 @@ for device, recMsg := range recMsgs {
 		device.Addr.String(), payload.Label)
 }
 ```
-**Here is the completed example:**
+**Completed example:**
 ```go
 package main
 
