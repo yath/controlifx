@@ -10,7 +10,7 @@ const (
 	// NormalTimeout is a sane number of milliseconds to wait before timing out during discovery.
 	NormalTimeout = 250
 
-	MaxReadSize    = LanHeaderSize+64
+	MaxReadSize    = LanHeaderSize + 64
 	DefaultPort    = 56700
 	DefaultPortStr = "56700"
 )
@@ -28,7 +28,7 @@ type (
 		// Addr is the remote address of the device.
 		Addr *net.UDPAddr
 		// Mac is the MAC address of the device.
-		Mac  uint64
+		Mac uint64
 	}
 
 	// Connection is the connection between the client and the network devices.
@@ -39,7 +39,7 @@ type (
 )
 
 func Connect() (_ Connection, err error) {
-	bcastAddr, err := net.ResolveUDPAddr("udp", net.JoinHostPort(net.IPv4bcast.String(), DefaultPortStr));
+	bcastAddr, err := net.ResolveUDPAddr("udp", net.JoinHostPort(net.IPv4bcast.String(), DefaultPortStr))
 	if err != nil {
 		return
 	}
@@ -109,7 +109,7 @@ func (o Connection) DiscoverDevices(timeout int, filter DiscoverFilter) (devices
 		return
 	}
 
-	o.conn.SetReadDeadline(time.Now().Add(time.Duration(timeout)*time.Millisecond))
+	o.conn.SetReadDeadline(time.Now().Add(time.Duration(timeout) * time.Millisecond))
 
 	for {
 		recMsg, raddr, err := o.receive(func(recMsg ReceivableLanMessage) bool {
@@ -223,7 +223,7 @@ func (o Connection) SendToAllAndGet(timeout int, msg SendableLanMessage, filter 
 		return
 	}
 
-	o.conn.SetReadDeadline(time.Now().Add(time.Duration(timeout)*time.Millisecond))
+	o.conn.SetReadDeadline(time.Now().Add(time.Duration(timeout) * time.Millisecond))
 
 	recMsgs = make(map[Device]ReceivableLanMessage)
 
@@ -240,8 +240,8 @@ func (o Connection) SendToAllAndGet(timeout int, msg SendableLanMessage, filter 
 		}
 
 		d := Device{
-			Addr:raddr,
-			Mac:recMsg.Header.FrameAddress.Target,
+			Addr: raddr,
+			Mac:  recMsg.Header.FrameAddress.Target,
 		}
 
 		recMsgs[d] = recMsg

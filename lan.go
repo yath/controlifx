@@ -181,13 +181,13 @@ func (o LanHeaderFrameAddress) MarshalBinary() (data []byte, _ error) {
 	data = make([]byte, 16)
 
 	// Little endian.
-	putUint48 := func (b []byte, v uint64) {
+	putUint48 := func(b []byte, v uint64) {
 		b[0] = byte(v)
-		b[1] = byte(v>>8)
-		b[2] = byte(v>>16)
-		b[3] = byte(v>>24)
-		b[4] = byte(v>>32)
-		b[5] = byte(v>>40)
+		b[1] = byte(v >> 8)
+		b[2] = byte(v >> 16)
+		b[3] = byte(v >> 24)
+		b[4] = byte(v >> 32)
+		b[5] = byte(v >> 40)
 	}
 
 	// Target.
@@ -225,7 +225,7 @@ func (o *LanHeaderFrameAddress) UnmarshalBinary(data []byte) error {
 	}
 
 	// Target.
-	if data[7] | data[8] == 0 {
+	if data[7]|data[8] == 0 {
 		o.Target = uint48(data[:6])
 	} else {
 		o.Target = binary.LittleEndian.Uint64(data[:8])
@@ -306,13 +306,13 @@ const (
 	// Misc.
 	UdpService = 1
 
-	Original1000VendorId      = 1
-	Color650VendorId          = 1
-	White800LowVVendorId      = 1
-	White800HighVVendorId     = 1
-	White900Br30LowVVendorId  = 1
-	Color1000Br30VendorId     = 1
-	Color1000VendorId         = 1
+	Original1000VendorId     = 1
+	Color650VendorId         = 1
+	White800LowVVendorId     = 1
+	White800HighVVendorId    = 1
+	White900Br30LowVVendorId = 1
+	Color1000Br30VendorId    = 1
+	Color1000VendorId        = 1
 
 	Original1000ProductId     = 1
 	Color650ProductId         = 3
@@ -322,18 +322,18 @@ const (
 	Color1000Br30ProductId    = 20
 	Color1000ProductId        = 22
 
-	Original1000Color         = true
-	Color650Color             = true
-	White800LowVColor         = false
-	White800HighVColor        = false
-	White900Br30LowVColor     = false
-	Color1000Br30Color        = true
-	Color1000Color            = true
+	Original1000Color     = true
+	Color650Color         = true
+	White800LowVColor     = false
+	White800HighVColor    = false
+	White900Br30LowVColor = false
+	Color1000Br30Color    = true
+	Color1000Color        = true
 )
 
 func getReceivablePayloadOfType(t uint16) (encoding.BinaryUnmarshaler, error) {
 	var payload encoding.BinaryUnmarshaler
-	
+
 	switch t {
 	case StateServiceType:
 		payload = &StateServiceLanMessage{}
@@ -374,9 +374,9 @@ func getReceivablePayloadOfType(t uint16) (encoding.BinaryUnmarshaler, error) {
 
 func createSendableLanMessage(t uint16) SendableLanMessage {
 	return SendableLanMessage{
-		Header:LanHeader{
-			ProtocolHeader:LanHeaderProtocolHeader{
-				Type:t,
+		Header: LanHeader{
+			ProtocolHeader: LanHeaderProtocolHeader{
+				Type: t,
 			},
 		},
 	}
