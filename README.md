@@ -14,6 +14,7 @@ Client side API for LIFX device control.
 - [Getting Started](#getting-started)
 - [Examples](#examples)
   - [Changing colors](#changing-colors) &ndash; change the color of the bulbs
+- [Additional Help](#additional-help)
 
 ## Installation
 Just run `go get -u gopkg.in/golifx/controlifx.v1` to get the latest version.
@@ -143,3 +144,6 @@ func main() {
 	}
 }
 ```
+
+## Additional Help
+Visit [#golifx](http://webchat.freenode.net?randomnick=1&channels=%23golifx&prompt=1) on chat.freenode.net to get help, ask questions, or discuss ideas.
