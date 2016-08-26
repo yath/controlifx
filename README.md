@@ -63,7 +63,7 @@ for device, recMsg := range recMsgs {
 package main
 
 import (
-	"gopkg.in/bionicrm/controlifx.v1"
+	"gopkg.in/golifx/controlifx.v1"
 	"log"
 )
 
@@ -89,6 +89,7 @@ func main() {
 			device.Addr.String(), payload.Label)
 	}
 }
+
 ```
 
 **Example output:**
@@ -108,7 +109,7 @@ Afterwards, we send the message to all devices on the LAN. However, unlike in th
 package main
 
 import (
-	"gopkg.in/bionicrm/controlifx.v1"
+	"gopkg.in/golifx/controlifx.v1"
 	"log"
 )
 
@@ -122,17 +123,13 @@ func main() {
 
 	// Create the payload to send to the LIFX devices.
 	payload := controlifx.LightSetColorLanMessage{
-		Color:controlifx.HSBK{
-			// Hue, Saturation, and Brightness must be interpolated to the range
-			// of an unsigned 16-bit integer, or 65535, or 0xFFFF.
-			Hue:0xffff/2,
-			Saturation:0xffff,
-			Brightness:0xffff,
-			// Kelvin is the color temperature in the range 2500..9000.
-			Kelvin:3500,
+		Color: controlifx.HSBK{
+			Hue:        0xffff / 2,
+			Saturation: 0xffff,
+			Brightness: 0xffff,
+			Kelvin:     3500,
 		},
-		// Duration is the time in milliseconds of the color transition.
-		Duration:1500,
+		Duration: 1500,
 	}
 
 	// Create the message with the payload that we're going to emit.
@@ -143,6 +140,7 @@ func main() {
 		log.Fatalln(err)
 	}
 }
+
 ```
 
 ## Additional Help
