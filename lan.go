@@ -305,6 +305,7 @@ const (
 
 	// Misc.
 	UdpService = 1
+	TcpService = 2
 
 	Original1000VendorId     = 1
 	Color650VendorId         = 1
