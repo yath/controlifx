@@ -304,7 +304,46 @@ const (
 	LightStatePowerType   = 118
 
 	// Misc.
-	UdpService = 1
+	UdpService        = 1
+	TcpService        = 2
+	OnboardingService = 3
+	OtaService        = 4
+
+	SawWaveform      = 0
+	SineWaveform     = 1
+	HalfSineWaveform = 2
+	TriangleWaveform = 3
+	PulseWaveform    = 4
+
+	OffWanStatus                    = 0
+	ConnectedWanStatus              = 1
+	ErrorUnauthorizedWanStatus      = 2
+	ErrorOverCapacityWanStatus      = 3
+	ErrorOverRateWanStatus          = 4
+	ErrorNoRouteWanStatus           = 5
+	ErrorInternalClientWanStatus    = 6
+	ErrorInternalServerWanStatus    = 7
+	ErrorDnsFailureWanStatus        = 8
+	ErrorSslFailureWanStatus        = 9
+	ErrorConnectionRefusedWanStatus = 10
+	ConnectingWanStatus             = 11
+
+	SoftApWifiNetworkInterface  = 1
+	StationWifiNetworkInterface = 2
+
+	ConnectingWifiStatus = 0
+	ConnectedWifiStatus  = 1
+	FailedWifiStatus     = 2
+	OffWifistatus        = 3
+
+	UnknownWifiSecurity      = 0
+	OpenWifiSecurity         = 1
+	WepPskWifiSecurity       = 2
+	WpaTkipPskWifiSecurity   = 3
+	WpaAesPskWifiSecurity    = 4
+	Wpa2AesPskWifiSecurity   = 5
+	Wpa2TkipPskWifiSecurity  = 6
+	Wpa2MixedPskWifiSecurity = 7
 
 	Original1000VendorId     = 1
 	Color650VendorId         = 1
