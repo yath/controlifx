@@ -267,41 +267,110 @@ func (o *LanHeaderProtocolHeader) UnmarshalBinary(data []byte) error {
 
 const (
 	// Sendable types.
-	GetServiceType      = 2
-	GetHostInfoType     = 12
-	GetHostFirmwareType = 14
-	GetWifiInfoType     = 16
-	GetWifiFirmwareType = 18
-	GetPowerType        = 20
-	SetPowerType        = 21
-	GetLabelType        = 23
-	SetLabelType        = 24
-	GetVersionType      = 32
-	GetInfoType         = 34
-	GetLocationType     = 48
-	GetGroupType        = 51
-	EchoRequestType     = 58
-	LightGetType        = 101
-	LightSetColorType   = 102
-	LightGetPowerType   = 116
-	LightSetPowerType   = 117
+	SetSiteType                         = 1
+	GetServiceType                      = 2
+	GetTimeType                         = 4
+	SetTimeType                         = 5
+	GetResetSwitchType                  = 7
+	GetDummyLoadType                    = 9
+	SetDummyLoadType                    = 10
+	GetHostInfoType                     = 12
+	GetHostFirmwareType                 = 14
+	GetWifiInfoType                     = 16
+	GetWifiFirmwareType                 = 18
+	GetPowerType                        = 20
+	SetPowerType                        = 21
+	GetLabelType                        = 23
+	SetLabelType                        = 24
+	GetTagsType                         = 26
+	SetTagsType                         = 27
+	GetTagLabelsType                    = 29
+	SetTagLabelsType                    = 30
+	GetVersionType                      = 32
+	GetInfoType                         = 34
+	GetMcuRailVoltageType               = 36
+	SetRebootType                       = 38
+	SetFactoryTestModeType              = 39
+	DisableFactoryTestModeType          = 40
+	SetPanGatewayType                   = 44
+	SetFactoryResetType                 = 46
+	GetLocationType                     = 48
+	SetLocationType                     = 49
+	GetGroupType                        = 51
+	SetGroupType                        = 52
+	GetOwnerType                        = 54
+	SetOwnerType                        = 55
+	GetFactoryTestModeType              = 57
+	EchoRequestType                     = 58
+	LightGetType                        = 101
+	LightSetColorType                   = 102
+	LightSetWaveformType                = 103
+	LightSetDimAbsoluteType             = 104
+	LightSetDimRelativeType             = 105
+	LightSetRgbwType                    = 106
+	LightGetRailVoltageType             = 108
+	LightGetPowerType                   = 116
+	LightGetTemperatureType             = 110
+	LightSetCalibrationCoefficientsType = 112
+	LightSetSimpleEventType             = 113
+	LightGetSimpleEventType             = 114
+	LightSetPowerType                   = 117
+	LightSetWaveformOptionalType        = 119
+	WanGetType                          = 201
+	WanSetType                          = 202
+	WanGetAuthKeyType                   = 204
+	WanSetAuthKeyType                   = 205
+	WanSetKeepAliveType                 = 207
+	WanSetHostType                      = 209
+	WanGetHostType                      = 210
+	WifiGetType                         = 301
+	WifiSetType                         = 302
+	WifiGetAccessPointsType             = 304
+	WifiSetAccessPointType              = 305
+	WifiGetAccessPointType              = 307
+	WifiSetAccessPointBroadcastType     = 309
+	SensorGetAmbientLightType           = 401
+	SensorGetDimmerVoltageType          = 403
 
 	// Receivable types.
-	StateServiceType      = 3
-	StateHostInfoType     = 13
-	StateHostFirmwareType = 15
-	StateWifiInfoType     = 17
-	StateWifiFirmwareType = 19
-	StatePowerType        = 22
-	StateLabelType        = 25
-	StateVersionType      = 33
-	StateInfoType         = 35
-	AcknowledgementType   = 45
-	StateLocationType     = 50
-	StateGroupType        = 53
-	EchoResponseType      = 59
-	LightStateType        = 107
-	LightStatePowerType   = 118
+	StateServiceType             = 3
+	StateTimeType                = 6
+	StateResetSwitchType         = 8
+	StateDummyLoadType           = 11
+	StateHostInfoType            = 13
+	StateHostFirmwareType        = 15
+	StateWifiInfoType            = 17
+	StateWifiFirmwareType        = 19
+	StatePowerType               = 22
+	StateLabelType               = 25
+	StateTagsType                = 28
+	StateTagLabelsType           = 31
+	StateVersionType             = 33
+	StateInfoType                = 35
+	StateMcuRailVoltageType      = 37
+	StateFactoryTestModeType     = 41
+	StateSiteType                = 42
+	StateRebootType              = 43
+	AcknowledgementType          = 45
+	StateFactoryResetType        = 47
+	StateLocationType            = 50
+	StateGroupType               = 53
+	StateOwnerType               = 56
+	EchoResponseType             = 59
+	LightStateType               = 107
+	LightStateRailVoltageType    = 109
+	LightStateTemperatureType    = 111
+	LightStateSimpleEventType    = 115
+	LightStatePowerType          = 118
+	WanStateType                 = 203
+	WanStateAuthKeyType          = 206
+	WanStateKeepAliveType        = 208
+	WanStateHostType             = 211
+	WifiStateType                = 303
+	WifiStateAccessPointsType    = 306
+	WifiStateAccessPointType     = 308
+	SensorStateAmbientLightType  = 402
+	SensorStateDimmerVoltageType = 404
 
 	// Misc.
 	UdpService        = 1
@@ -419,6 +488,14 @@ func createSendableLanMessage(t uint16) SendableLanMessage {
 			},
 		},
 	}
+}
+
+type SetSiteLanMessage struct {
+	Site [6]byte
+}
+
+func SetSite(payload SetSiteLanMessage) SendableLanMessage {
+	return createSendableLanMessage()
 }
 
 func GetService() SendableLanMessage {
