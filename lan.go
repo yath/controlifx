@@ -464,6 +464,8 @@ func getReceivablePayloadOfType(t uint16) (encoding.BinaryUnmarshaler, error) {
 		payload = &StateLocationLanMessage{}
 	case StateGroupType:
 		payload = &StateGroupLanMessage{}
+	case StateOwnerType:
+		payload = &StateOwnerLanMessage{}
 	case EchoResponseType:
 		payload = &EchoResponseLanMessage{}
 	case LightStateType:
@@ -756,6 +758,59 @@ type StateGroupLanMessage struct {
 func (o *StateGroupLanMessage) UnmarshalBinary(data []byte) error {
 	// Group.
 	copy(o.Group[:], data[:16])
+
+	// Label.
+	o.Label = BToStr(data[16:48])
+
+	// Updated at.
+	o.UpdatedAt = binary.LittleEndian.Uint64(data[48:])
+
+	return nil
+}
+
+func GetOwner() SendableLanMessage {
+	return createSendableLanMessage(GetOwnerType)
+}
+
+type SetOwnerLanMessage struct {
+	Owner     [16]byte
+	Label     string
+	UpdatedAt uint64
+}
+
+func (o SetOwnerLanMessage) MarshalBinary() (data []byte, _ error) {
+	data = make([]byte, 56)
+
+	// Owner.
+	copy(data[:16], o.Owner[:])
+
+	// Label.
+	copy(data[16:48], o.Label)
+
+	// Updated at.
+	binary.LittleEndian.PutUint64(data[48:], o.UpdatedAt)
+
+	return
+}
+
+func SetOwner(payload SetOwnerLanMessage) SendableLanMessage {
+	msg := createSendableLanMessage(SetOwnerType)
+	msg.Payload = payload
+
+	msg.updateSize()
+
+	return msg
+}
+
+type StateOwnerLanMessage struct {
+	Owner     [16]byte
+	Label     string
+	UpdatedAt uint64
+}
+
+func (o *StateOwnerLanMessage) UnmarshalBinary(data []byte) error {
+	// Owner.
+	copy(o.Owner[:], data[:16])
 
 	// Label.
 	o.Label = BToStr(data[16:48])
