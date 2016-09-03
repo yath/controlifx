@@ -869,10 +869,6 @@ func (o HSBK) MarshalBinary() (data []byte, _ error) {
 	// Brightness.
 	binary.LittleEndian.PutUint16(data[4:6], o.Brightness)
 
-	if o.Kelvin < 2500 || o.Kelvin > 9000 {
-		return nil, fmt.Errorf("color temperature %d out of range (2500..9000)", o.Kelvin)
-	}
-
 	// Kelvin.
 	binary.LittleEndian.PutUint16(data[6:], o.Kelvin)
 
