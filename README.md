@@ -2,9 +2,9 @@
 Client side API for LIFX device control.
 
 **Projects built with Controlifx:**
-- [Clifx](https://github.com/golifx/clifx) &ndash; command-line interface for LIFX device control
-- [Emulifx](https://github.com/golifx/emulifx) &ndash; LIFX device emulator
-- [Implifx](https://github.com/golifx/implifx) &ndash; server side API for LIFX device implementations
+- [Clifx](https://github.com/lifx-tools/clifx) &ndash; command-line interface for LIFX device control
+- [Emulifx](https://github.com/lifx-tools/emulifx) &ndash; LIFX device emulator
+- [Implifx](https://github.com/lifx-tools/implifx) &ndash; server side API for LIFX device implementations
 
 **Resources:**
 - [LIFX LAN protocol](https://lan.developer.lifx.com/)
@@ -17,7 +17,7 @@ Client side API for LIFX device control.
 - [Additional Help](#additional-help)
 
 ## Installation
-Just run `go get -u gopkg.in/golifx/controlifx.v1` to get the latest version.
+Just run `go get -u gopkg.in/lifx-tools/controlifx.v1` to get the latest version.
 
 ## Getting Started
 You'll always start off by opening up a UDP socket for sending and receiving messages:
@@ -63,7 +63,7 @@ for device, recMsg := range recMsgs {
 package main
 
 import (
-	"gopkg.in/golifx/controlifx.v1"
+	"gopkg.in/lifx-tools/controlifx.v1"
 	"log"
 )
 
@@ -109,7 +109,7 @@ Afterwards, we send the message to all devices on the LAN. However, unlike in th
 package main
 
 import (
-	"gopkg.in/golifx/controlifx.v1"
+	"gopkg.in/lifx-tools/controlifx.v1"
 	"log"
 )
 
