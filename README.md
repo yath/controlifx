@@ -144,4 +144,4 @@ func main() {
 ```
 
 ## Additional Help
-Visit [#golifx](http://webchat.freenode.net?randomnick=1&channels=%23golifx&prompt=1) on chat.freenode.net to get help, ask questions, or discuss ideas.
+Visit [#lifx-tools](http://webchat.freenode.net?randomnick=1&channels=%23lifx-tools&prompt=1) on chat.freenode.net to get help, ask questions, or discuss ideas.

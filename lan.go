@@ -266,45 +266,150 @@ func (o *LanHeaderProtocolHeader) UnmarshalBinary(data []byte) error {
 }
 
 const (
-	// Sendable types.
-	GetServiceType      = 2
-	GetHostInfoType     = 12
-	GetHostFirmwareType = 14
-	GetWifiInfoType     = 16
-	GetWifiFirmwareType = 18
-	GetPowerType        = 20
-	SetPowerType        = 21
-	GetLabelType        = 23
-	SetLabelType        = 24
-	GetVersionType      = 32
-	GetInfoType         = 34
-	GetLocationType     = 48
-	GetGroupType        = 51
-	EchoRequestType     = 58
-	LightGetType        = 101
-	LightSetColorType   = 102
-	LightGetPowerType   = 116
-	LightSetPowerType   = 117
-
-	// Receivable types.
-	StateServiceType      = 3
-	StateHostInfoType     = 13
-	StateHostFirmwareType = 15
-	StateWifiInfoType     = 17
-	StateWifiFirmwareType = 19
-	StatePowerType        = 22
-	StateLabelType        = 25
-	StateVersionType      = 33
-	StateInfoType         = 35
-	AcknowledgementType   = 45
-	StateLocationType     = 50
-	StateGroupType        = 53
-	EchoResponseType      = 59
-	LightStateType        = 107
-	LightStatePowerType   = 118
+	SetSiteType                         = 1
+	GetServiceType                      = 2
+	StateServiceType                    = 3
+	GetTimeType                         = 4
+	SetTimeType                         = 5
+	StateTimeType                       = 6
+	GetResetSwitchType                  = 7
+	StateResetSwitchType                = 8
+	GetDummyLoadType                    = 9
+	SetDummyLoadType                    = 10
+	StateDummyLoadType                  = 11
+	GetHostInfoType                     = 12
+	StateHostInfoType                   = 13
+	GetHostFirmwareType                 = 14
+	StateHostFirmwareType               = 15
+	GetWifiInfoType                     = 16
+	StateWifiInfoType                   = 17
+	GetWifiFirmwareType                 = 18
+	StateWifiFirmwareType               = 19
+	GetPowerType                        = 20
+	SetPowerType                        = 21
+	StatePowerType                      = 22
+	GetLabelType                        = 23
+	SetLabelType                        = 24
+	StateLabelType                      = 25
+	GetTagsType                         = 26
+	SetTagsType                         = 27
+	StateTagsType                       = 28
+	GetTagLabelsType                    = 29
+	SetTagLabelsType                    = 30
+	StateTagLabelsType                  = 31
+	GetVersionType                      = 32
+	StateVersionType                    = 33
+	GetInfoType                         = 34
+	StateInfoType                       = 35
+	GetMcuRailVoltageType               = 36
+	StateMcuRailVoltageType             = 37
+	SetRebootType                       = 38
+	SetFactoryTestModeType              = 39
+	DisableFactoryTestModeType          = 40
+	StateFactoryTestModeType            = 41
+	StateSiteType                       = 42
+	StateRebootType                     = 43
+	SetPanGatewayType                   = 44
+	AcknowledgementType                 = 45
+	SetFactoryResetType                 = 46
+	StateFactoryResetType               = 47
+	GetLocationType                     = 48
+	SetLocationType                     = 49
+	StateLocationType                   = 50
+	GetGroupType                        = 51
+	SetGroupType                        = 52
+	StateGroupType                      = 53
+	GetOwnerType                        = 54
+	SetOwnerType                        = 55
+	StateOwnerType                      = 56
+	GetFactoryTestModeType              = 57
+	EchoRequestType                     = 58
+	EchoResponseType                    = 59
+	LightGetType                        = 101
+	LightSetColorType                   = 102
+	LightSetWaveformType                = 103
+	LightSetDimAbsoluteType             = 104
+	LightSetDimRelativeType             = 105
+	LightSetRgbwType                    = 106
+	LightStateType                      = 107
+	LightGetRailVoltageType             = 108
+	LightStateRailVoltageType           = 109
+	LightGetTemperatureType             = 110
+	LightStateTemperatureType           = 111
+	LightSetCalibrationCoefficientsType = 112
+	LightSetSimpleEventType             = 113
+	LightGetSimpleEventType             = 114
+	LightStateSimpleEventType           = 115
+	LightGetPowerType                   = 116
+	LightSetPowerType                   = 117
+	LightStatePowerType                 = 118
+	LightSetWaveformOptionalType        = 119
+	WanGetType                          = 201
+	WanSetType                          = 202
+	WanStateType                        = 203
+	WanGetAuthKeyType                   = 204
+	WanSetAuthKeyType                   = 205
+	WanStateAuthKeyType                 = 206
+	WanSetKeepAliveType                 = 207
+	WanStateKeepAliveType               = 208
+	WanSetHostType                      = 209
+	WanGetHostType                      = 210
+	WanStateHostType                    = 211
+	WifiGetType                         = 301
+	WifiSetType                         = 302
+	WifiStateType                       = 303
+	WifiGetAccessPointsType             = 304
+	WifiSetAccessPointType              = 305
+	WifiStateAccessPointsType           = 306
+	WifiGetAccessPointType              = 307
+	WifiStateAccessPointType            = 308
+	WifiSetAccessPointBroadcastType     = 309
+	SensorGetAmbientLightType           = 401
+	SensorStateAmbientLightType         = 402
+	SensorGetDimmerVoltageType          = 403
+	SensorStateDimmerVoltageType        = 404
 
 	// Misc.
-	UdpService = 1
+	UdpService        = 1
+	TcpService        = 2
+	OnboardingService = 3
+	OtaService        = 4
+
+	SawWaveform      = 0
+	SineWaveform     = 1
+	HalfSineWaveform = 2
+	TriangleWaveform = 3
+	PulseWaveform    = 4
+
+	OffWanStatus                    = 0
+	ConnectedWanStatus              = 1
+	ErrorUnauthorizedWanStatus      = 2
+	ErrorOverCapacityWanStatus      = 3
+	ErrorOverRateWanStatus          = 4
+	ErrorNoRouteWanStatus           = 5
+	ErrorInternalClientWanStatus    = 6
+	ErrorInternalServerWanStatus    = 7
+	ErrorDnsFailureWanStatus        = 8
+	ErrorSslFailureWanStatus        = 9
+	ErrorConnectionRefusedWanStatus = 10
+	ConnectingWanStatus             = 11
+
+	SoftApWifiNetworkInterface  = 1
+	StationWifiNetworkInterface = 2
+
+	ConnectingWifiStatus = 0
+	ConnectedWifiStatus  = 1
+	FailedWifiStatus     = 2
+	OffWifistatus        = 3
+
+	UnknownWifiSecurity      = 0
+	OpenWifiSecurity         = 1
+	WepPskWifiSecurity       = 2
+	WpaTkipPskWifiSecurity   = 3
+	WpaAesPskWifiSecurity    = 4
+	Wpa2AesPskWifiSecurity   = 5
+	Wpa2TkipPskWifiSecurity  = 6
+	Wpa2MixedPskWifiSecurity = 7
 
 	Original1000VendorId     = 1
 	Color650VendorId         = 1
@@ -359,6 +464,8 @@ func getReceivablePayloadOfType(t uint16) (encoding.BinaryUnmarshaler, error) {
 		payload = &StateLocationLanMessage{}
 	case StateGroupType:
 		payload = &StateGroupLanMessage{}
+	case StateOwnerType:
+		payload = &StateOwnerLanMessage{}
 	case EchoResponseType:
 		payload = &EchoResponseLanMessage{}
 	case LightStateType:
@@ -661,6 +768,59 @@ func (o *StateGroupLanMessage) UnmarshalBinary(data []byte) error {
 	return nil
 }
 
+func GetOwner() SendableLanMessage {
+	return createSendableLanMessage(GetOwnerType)
+}
+
+type SetOwnerLanMessage struct {
+	Owner     [16]byte
+	Label     string
+	UpdatedAt uint64
+}
+
+func (o SetOwnerLanMessage) MarshalBinary() (data []byte, _ error) {
+	data = make([]byte, 56)
+
+	// Owner.
+	copy(data[:16], o.Owner[:])
+
+	// Label.
+	copy(data[16:48], o.Label)
+
+	// Updated at.
+	binary.LittleEndian.PutUint64(data[48:], o.UpdatedAt)
+
+	return
+}
+
+func SetOwner(payload SetOwnerLanMessage) SendableLanMessage {
+	msg := createSendableLanMessage(SetOwnerType)
+	msg.Payload = payload
+
+	msg.updateSize()
+
+	return msg
+}
+
+type StateOwnerLanMessage struct {
+	Owner     [16]byte
+	Label     string
+	UpdatedAt uint64
+}
+
+func (o *StateOwnerLanMessage) UnmarshalBinary(data []byte) error {
+	// Owner.
+	copy(o.Owner[:], data[:16])
+
+	// Label.
+	o.Label = BToStr(data[16:48])
+
+	// Updated at.
+	o.UpdatedAt = binary.LittleEndian.Uint64(data[48:])
+
+	return nil
+}
+
 type EchoRequestLanMessage struct {
 	Payload [64]byte
 }
@@ -708,10 +868,6 @@ func (o HSBK) MarshalBinary() (data []byte, _ error) {
 
 	// Brightness.
 	binary.LittleEndian.PutUint16(data[4:6], o.Brightness)
-
-	if o.Kelvin < 2500 || o.Kelvin > 9000 {
-		return nil, fmt.Errorf("color temperature %d out of range (2500..9000)", o.Kelvin)
-	}
 
 	// Kelvin.
 	binary.LittleEndian.PutUint16(data[6:], o.Kelvin)
